@@ -1,0 +1,94 @@
+<meta charset="utf-8"><meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buy-Criteria Tuning Brief — 100-Player Sweep Results</title>
+<style>
+  :root { --ink:#1a1d24; --sub:#5a6272; --line:#e4e7ee; --accent:#0f6b3f; --warn:#a33; --card:#fff; --bg:#f5f6f9; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width:880px; margin:0 auto; padding:32px 20px 64px; }
+  h1 { font-size:26px; margin:0 0 4px; }
+  .sub { color:var(--sub); margin-bottom:28px; }
+  h2 { font-size:19px; margin:36px 0 10px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin:14px 0; }
+  table { border-collapse:collapse; width:100%; font-size:14.5px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th { color:var(--sub); font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; }
+  .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .pass { color:var(--accent); font-weight:600; }
+  .fail { color:var(--warn); font-weight:600; }
+  .big { font-size:22px; font-weight:700; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+  .stat { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  .stat .v { font-size:24px; font-weight:700; }
+  .stat .k { color:var(--sub); font-size:13px; }
+  .rec { border-left:4px solid var(--accent); }
+  .scroll { overflow-x:auto; }
+  code { background:#eef1f6; border-radius:4px; padding:1px 6px; font-size:13.5px; }
+</style>
+<div class="wrap">
+  <h1>Buy-Criteria Tuning Brief</h1>
+  <div class="sub">100-player eBay sweep &middot; July 3, 2026 &middot; criteria: gem &ge;45% &middot; spread &ge;3&times; &middot; &ge;8 raw copies &middot; raw $250&ndash;750 &middot; season 2018-19+</div>
+
+  <div class="grid">
+    <div class="stat"><div class="v">100</div><div class="k">players scanned (4 products each)</div></div>
+    <div class="stat"><div class="v">58,303</div><div class="k">card models enumerated (broad)</div></div>
+    <div class="stat"><div class="v">8,709</div><div class="k">models found in the $250&ndash;750 band</div></div>
+    <div class="stat"><div class="v">0</div><div class="k">cards passing all five criteria</div></div>
+  </div>
+
+  <h2>What we did</h2>
+  <div class="card">
+    <p style="margin:0 0 8px">We ran the full pipeline three times (15 &rarr; 30 &rarr; 100 players) with all five criteria enforced, then rebuilt the scan so eBay itself only serves listings <b>priced inside the $250&ndash;750 buy band with graded slabs excluded</b> (criterion 4 applied server-side). That final sweep valued the 100 most promising in-band card models with real subqueries: live raw asking prices, PSA-10 sold comps, and &mdash; for survivors &mdash; the PSA gem-rate panel.</p>
+    <p style="margin:0">Result: exactly <b>one card</b> in ~8,700 in-band models cleared spread + band + liquidity&hellip; and it fails the gem bar. Zero buys.</p>
+  </div>
+
+  <h2>The two exhibits: criteria 1 and 2 veto each other's winners</h2>
+  <div class="card scroll">
+    <table>
+      <tr><th>Card</th><th class="num">Raw (median)</th><th class="num">PSA-10</th><th class="num">Spread</th><th class="num">Gem rate</th><th class="num">Expected profit*</th><th>Verdict under criteria</th></tr>
+      <tr>
+        <td>2018-19 Prizm SGA Silver #184</td>
+        <td class="num">$425 (n=8)</td><td class="num">$2,849</td>
+        <td class="num pass">6.7&times;</td><td class="num fail">16%</td>
+        <td class="num">+$359</td>
+        <td><span class="fail">REJECTED</span> &mdash; gem &lt; 45%</td>
+      </tr>
+      <tr>
+        <td>2023-24 Prizm Wemby Orange Ice #136</td>
+        <td class="num">$725 (n=10)</td><td class="num">$2,000</td>
+        <td class="num fail">2.8&times;</td><td class="num pass">54.6%</td>
+        <td class="num">+$676</td>
+        <td><span class="fail">REJECTED</span> &mdash; spread &lt; 3&times;</td>
+      </tr>
+    </table>
+    <p style="color:var(--sub); font-size:13.5px; margin:10px 0 0">*Expected profit = gem_rate &times; (PSA-10 price &minus; raw) &minus; $20 grading, computed with each card's real PSA population data (conservative: PSA-9 outcome valued at $0). These are the two best cards we have ever validated end-to-end &mdash; each fails exactly one criterion, and a different one.</p>
+  </div>
+  <div class="card">
+    <p style="margin:0"><b>Why this happens:</b> gem rate and spread fight each other by construction. A high gem rate means PSA 10s are common &rarr; the PSA-10 price compresses toward raw &rarr; spread shrinks below 3&times;. A big spread means PSA 10s are scarce and premium &rarr; the gem rate is low. Demanding both &ge;45% <i>and</i> &ge;3&times; selects a market corner that barely exists: across every in-band card with two-sided data, the best spreads were 2.8&times;, 2.8&times;, 2.6&times; &mdash; and the 3&times;+ card gems at 16%.</p>
+  </div>
+
+  <h2>Where the 100 valued candidates died</h2>
+  <div class="card scroll">
+    <table>
+      <tr><th>Gate</th><th class="num">Cards</th><th>Meaning</th></tr>
+      <tr><td>No two-sided market</td><td class="num">42</td><td>No PSA-10 sold comp and/or no raw copies &mdash; unpriceable, honest skip</td></tr>
+      <tr><td>Spread &lt; 3&times;</td><td class="num">30</td><td>Real spreads measured; best were 2.8 / 2.8 / 2.6</td></tr>
+      <tr><td>Raw below $250</td><td class="num">17</td><td>Median settled under the band after full pricing</td></tr>
+      <tr><td>Season pre-2018</td><td class="num">10</td><td>Criterion 5 doing its job</td></tr>
+      <tr><td><b>Passed 2&ndash;5, failed gem</b></td><td class="num"><b>1</b></td><td>SGA Silver #184 (16% gem)</td></tr>
+    </table>
+  </div>
+
+  <h2>Recommendation</h2>
+  <div class="card rec">
+    <p style="margin:0 0 8px"><b>Keep as hard gates:</b> raw $250&ndash;750 (capital per card), &ge;8 raw copies (entry liquidity), season 2018-19+ (modern focus). These are operational constraints and they filter cheaply and correctly.</p>
+    <p style="margin:0 0 8px"><b>Replace the gem bar + spread bar with the profit math they're standing in for.</b> The pipeline already computes expected profit using each card's actual gem rate and actual prices. A gate of <code>expected profit &ge; $200 AND ROI &ge; 50%</code> passes both exhibits above (+$359 / 91% ROI and +$676 / 91% ROI) and still rejects every low-gem low-spread dud &mdash; the math punishes a 16% gem rate exactly in proportion to what it costs.</p>
+    <p style="margin:0"><b>If you want a floor anyway:</b> gem &ge; 25% <i>or</i> spread &ge; 4&times; (either extreme can carry the EV) plus the profit gate. Today that yields the same two buys.</p>
+  </div>
+
+  <h2>Caveats</h2>
+  <div class="card">
+    <p style="margin:0 0 8px"><b>Thin comps:</b> several in-band PSA-10 medians rest on 1 sale (eBay only shows ~45 days of solds). The weekly cadence will accumulate history; treat n=1 rows as leads to verify, not orders.</p>
+    <p style="margin:0"><b>Coverage:</b> 100 valuation slots per run against ~8,700 in-band models. Slots are cheap now (~2 unlocker credits each); if the tuned criteria pass more cards, we raise the cap, not the player list.</p>
+  </div>
+</div>
