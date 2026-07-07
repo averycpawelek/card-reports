@@ -1,104 +1,306 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<title>Card Validation Results — July 7, 2026</title>
-<style>
-  :root { --ink:#1a1d24; --sub:#5a6272; --line:#e4e7ee; --accent:#0f6b3f; --warn:#a33; --card:#fff; --bg:#f5f6f9; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif; }
-  .wrap { max-width:940px; margin:0 auto; padding:32px 20px 64px; }
-  h1 { font-size:26px; margin:0 0 4px; }
-  .sub { color:var(--sub); margin-bottom:28px; }
-  h2 { font-size:19px; margin:36px 0 10px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin:14px 0; }
-  table { border-collapse:collapse; width:100%; font-size:14.5px; }
-  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
-  th { color:var(--sub); font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; }
-  .num { text-align:right; font-variant-numeric:tabular-nums; }
-  .pass { color:var(--accent); font-weight:600; }
-  .fail { color:var(--warn); font-weight:600; }
-  .near { color:#9a6700; font-weight:600; }
-  .scroll { overflow-x:auto; }
-  code { background:#eef1f6; border-radius:4px; padding:1px 6px; font-size:13.5px; }
-  .note { color:var(--sub); font-size:13.5px; margin:10px 0 0; }
-  a { color:#2563eb; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow">
+  <title>Card Arbitrage Report</title>
+  <style>
+    @media (max-width:620px){ .container{ width:100% !important; } }
+    a{ color:#2563eb; }
+  </style>
 </head>
-<body>
-<div class="wrap">
-  <h1>Card Validation Results</h1>
-  <div class="sub">July 7, 2026 &middot; candidates from the 100-player eBay sweep, fully verified &middot; every price is the median of real eBay sold sales, matched to the exact card via eBay&rsquo;s catalog ID</div>
+<body style="margin:0;padding:0;background:#f4f5f7;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;">
 
-  <div class="card scroll">
-    <table>
-      <tr>
-        <th>Card</th>
-        <th class="num">Raw (median)</th>
-        <th class="num">PSA-10 sold</th>
-        <th class="num">Spread</th>
-        <th class="num">Gem rate</th>
-        <th class="num">Expected profit*</th>
-        <th class="num">ROI</th>
-        <th>Verdict</th>
-      </tr>
-      <tr>
-        <td>2018-19 Prizm SGA Silver #184</td>
-        <td class="num">$425 (n=17)</td>
-        <td class="num">$3,000 (n=32)</td>
-        <td class="num pass">7.1&times;</td>
-        <td class="num fail">16%</td>
-        <td class="num pass">+$382</td>
-        <td class="num pass">86%</td>
-        <td><span class="pass">BEST CANDIDATE</span> &mdash; fails only the 45% gem bar</td>
-      </tr>
-      <tr>
-        <td>2020-21 Prizm Ant Edwards Silver #258</td>
-        <td class="num">$250 (n=23)</td>
-        <td class="num">$901 (n=73)</td>
-        <td class="num pass">3.6&times;</td>
-        <td class="num fail">30%</td>
-        <td class="num near">+$175</td>
-        <td class="num pass">65%</td>
-        <td><span class="near">NEAR MISS</span> &mdash; just under the $200 profit floor</td>
-      </tr>
-      <tr>
-        <td>2023-24 Select Wemby Red Cracked Ice #87</td>
-        <td class="num">$240 (n=18)</td>
-        <td class="num">$350 (n=61)</td>
-        <td class="num fail">1.5&times;</td>
-        <td class="num pass">81%</td>
-        <td class="num fail">+$69</td>
-        <td class="num fail">26%</td>
-        <td><span class="fail">NO BUY</span> &mdash; 10s are common, so they&rsquo;re cheap</td>
-      </tr>
-      <tr>
-        <td>2020-21 Prizm Haliburton Silver #262</td>
-        <td class="num">$69 (n=41)</td>
-        <td class="num">$370 (n=7)</td>
-        <td class="num pass">5.4&times;</td>
-        <td class="num fail">17%</td>
-        <td class="num fail">+$31</td>
-        <td class="num fail">35%</td>
-        <td><span class="fail">NO BUY</span> &mdash; too cheap a card to carry the fees</td>
-      </tr>
-    </table>
-    <p class="note">*Expected profit = gem_rate &times; (PSA-10 price &minus; raw cost) &minus; $20 grading, using each card&rsquo;s real PSA population. Conservative: a PSA-9 outcome is valued at $0. &ldquo;n&rdquo; is the number of real sold sales (or live listings, for raw) behind each figure.</p>
-  </div>
+          <!-- header -->
+          <tr>
+            <td style="padding:4px 4px 18px 4px;">
+              <div style="font:700 22px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">🏀 Card Arbitrage &mdash; Weekly Report</div>
+              <div style="font:400 14px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;margin-top:4px;">
+                4 new card models surfaced by open scan this week.
+              </div>
+            </td>
+          </tr>
 
-  <h2>How to read this</h2>
-  <div class="card">
-    <p style="margin:0 0 8px"><b>Under the current five criteria (gem &ge;45% + spread &ge;3&times; + 8+ raw copies + $250&ndash;750 + 2018-19 or newer): zero buys.</b> The gem bar and the spread bar veto each other &mdash; every card with a big spread gems low (10s being scarce is <i>why</i> the spread is big), and the card that gems high (Wemby, 81%) has a compressed spread because 10s are everywhere.</p>
-    <p style="margin:0">Under a profit gate instead (<code>expected profit &ge; $200 AND ROI &ge; 50%</code>): <b>SGA Silver #184 is a buy</b> (+$382 expected, 86% ROI, backed by 32 PSA-10 sales and 17 live raw copies in the buy band), with Edwards #258 the next one to watch. The full argument is in the <a href="criteria-brief.html">criteria tuning brief</a>.</p>
-  </div>
+          
 
-  <h2>Caveats</h2>
-  <div class="card">
-    <p style="margin:0 0 8px"><b>Gem-rate selection bias:</b> PSA&rsquo;s published gem rate reflects cards submitters pre-screened before paying grading fees. Buying raw off eBay sight-unseen should be underwritten at a haircut &mdash; SGA at half its published 16% still clears roughly +$160, and that&rsquo;s the honest range to discuss.</p>
-    <p style="margin:0"><b>This is a partial sweep</b> (~6% of the in-band pool, 4 product lines, basketball only). The next full sweep runs with deeper comps and wider coverage; expect more candidates like SGA, not fewer.</p>
-  </div>
-</div>
+          
+
+          
+
+          
+          <!-- Section 2: discovery (broad open-scan) classes -->
+          <tr><td style="padding:14px 4px 4px 4px;">
+            <div style="font:700 16px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;margin:6px 0 2px 0;">Discovery &mdash; New Card Models</div>
+            <div style="font:400 13px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#9a6700;margin:0 0 12px 0;">Surfaced by open scan &mdash; verify before buying.</div>
+          </td></tr>
+          <tr><td style="padding:0 4px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;margin:0 0 16px 0;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.06);">
+  <tr>
+    <td style="padding:18px 20px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="100" valign="top" style="padding-right:16px;">
+            
+            <img src="https://i.ebayimg.com/images/g/sCwAAeSwhGVqQazt/s-l500.jpg" alt="" width="84" height="118" style="display:block;width:84px;height:118px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;background:linear-gradient(135deg,#eef2f7,#dbe2ec);">
+            
+          </td>
+          <td valign="top">
+      <div style="font:600 15px/1.35 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;margin:0 0 4px 0;">2018 Prizm Shai Gilgeous-Alexander Silver Prizm #184</div>
+      <div style="margin:0 0 12px 0;">
+        <span style="display:inline-block;font:600 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e3a8a;background:#e0e7ff;padding:5px 9px;border-radius:999px;">PSA 10 target</span>
+      </div>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px 0;">
+        <tr>
+          <td style="padding-right:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">Expected profit</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f7b33;">$381.80</div>
+          </td>
+          <td style="padding-right:18px;border-left:1px solid #eef0f3;padding-left:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">ROI</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">85.8%</div>
+          </td>
+          <td style="border-left:1px solid #eef0f3;padding-left:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">Raw range</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">$200–$700</div>
+          </td>
+        </tr>
+      </table>
+
+      <div style="font:400 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;margin:0 0 4px 0;">
+        <strong style="color:#111827;">Gem rate</strong> 15.6% <span style="color:#9ca3af;">(pop 4627)</span>
+        &nbsp;&middot;&nbsp;
+        <strong style="color:#111827;">PSA 10</strong> $2999.99 <span style="color:#9ca3af;">(n=32)</span>
+        &nbsp;&middot;&nbsp;
+        <strong style="color:#111827;">PSA 9</strong> $424.99 <span style="color:#9ca3af;">(n=75)</span>
+      </div>
+      <div style="font:400 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;margin:0 0 4px 0;">
+        <strong style="color:#111827;">Raw median</strong> $425.00 <span style="color:#9ca3af;">(n=17)</span>
+      </div>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:12px;">
+        <tr>
+          <td valign="middle">
+            <span style="display:inline-block;font:600 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f7b33;background:#e7f5ec;padding:5px 9px;border-radius:999px;text-transform:capitalize;">&#9679; high confidence</span>
+          </td>
+          <td valign="middle" align="right" style="white-space:nowrap;">
+            <a href="https://www.ebay.com/sch/i.html?_nkw=Shai+Gilgeous-Alexander+2018+Prizm+Silver+Prizm+-PSA+-BGS+-SGC+-CGC&amp;_sacat=212&amp;Sport=Basketball&amp;_ipg=240" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#ffffff;background:#2563eb;padding:10px 16px;border-radius:8px;text-decoration:none;">Browse raw copies &rarr;</a>
+            <a href="https://www.ebay.com/sch/i.html?_nkw=Shai+Gilgeous-Alexander+2018+Prizm+Silver+Prizm+PSA+10&amp;LH_Sold=1&amp;LH_Complete=1&amp;_sacat=212&amp;Sport=Basketball" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;background:#f3f4f6;border:1px solid #d1d5db;padding:9px 15px;border-radius:8px;text-decoration:none;margin-left:8px;">Sold comps</a>
+            <a href="https://www.ebay.com/p/12056511672" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;background:#f3f4f6;border:1px solid #d1d5db;padding:9px 15px;border-radius:8px;text-decoration:none;margin-left:8px;">Exact card</a>
+          </td>
+        </tr>
+      </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;margin:0 0 16px 0;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.06);">
+  <tr>
+    <td style="padding:18px 20px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="100" valign="top" style="padding-right:16px;">
+            
+            <img src="https://i.ebayimg.com/images/g/0AgAAeSw3bJqTBHY/s-l500.webp" alt="" width="84" height="118" style="display:block;width:84px;height:118px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;background:linear-gradient(135deg,#eef2f7,#dbe2ec);">
+            
+          </td>
+          <td valign="top">
+      <div style="font:600 15px/1.35 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;margin:0 0 4px 0;">2020 Prizm Anthony Edwards Silver Prizm #258</div>
+      <div style="margin:0 0 12px 0;">
+        <span style="display:inline-block;font:600 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e3a8a;background:#e0e7ff;padding:5px 9px;border-radius:999px;">PSA 10 target</span>
+      </div>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px 0;">
+        <tr>
+          <td style="padding-right:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">Expected profit</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f7b33;">$174.66</div>
+          </td>
+          <td style="padding-right:18px;border-left:1px solid #eef0f3;padding-left:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">ROI</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">64.7%</div>
+          </td>
+          <td style="border-left:1px solid #eef0f3;padding-left:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">Raw range</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">$73–$500</div>
+          </td>
+        </tr>
+      </table>
+
+      <div style="font:400 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;margin:0 0 4px 0;">
+        <strong style="color:#111827;">Gem rate</strong> 29.9% <span style="color:#9ca3af;">(pop 7655)</span>
+        &nbsp;&middot;&nbsp;
+        <strong style="color:#111827;">PSA 10</strong> $901.00 <span style="color:#9ca3af;">(n=73)</span>
+        &nbsp;&middot;&nbsp;
+        <strong style="color:#111827;">PSA 9</strong> $225.94 <span style="color:#9ca3af;">(n=94)</span>
+      </div>
+      <div style="font:400 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;margin:0 0 4px 0;">
+        <strong style="color:#111827;">Raw median</strong> $250.00 <span style="color:#9ca3af;">(n=23)</span>
+      </div>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:12px;">
+        <tr>
+          <td valign="middle">
+            <span style="display:inline-block;font:600 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f7b33;background:#e7f5ec;padding:5px 9px;border-radius:999px;text-transform:capitalize;">&#9679; high confidence</span>
+          </td>
+          <td valign="middle" align="right" style="white-space:nowrap;">
+            <a href="https://www.ebay.com/sch/i.html?_nkw=Anthony+Edwards+2020+Prizm+Silver+Prizm+-PSA+-BGS+-SGC+-CGC&amp;_sacat=212&amp;Sport=Basketball&amp;_ipg=240" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#ffffff;background:#2563eb;padding:10px 16px;border-radius:8px;text-decoration:none;">Browse raw copies &rarr;</a>
+            <a href="https://www.ebay.com/sch/i.html?_nkw=Anthony+Edwards+2020+Prizm+Silver+Prizm+PSA+10&amp;LH_Sold=1&amp;LH_Complete=1&amp;_sacat=212&amp;Sport=Basketball" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;background:#f3f4f6;border:1px solid #d1d5db;padding:9px 15px;border-radius:8px;text-decoration:none;margin-left:8px;">Sold comps</a>
+            <a href="https://www.ebay.com/p/24056568272" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;background:#f3f4f6;border:1px solid #d1d5db;padding:9px 15px;border-radius:8px;text-decoration:none;margin-left:8px;">Exact card</a>
+          </td>
+        </tr>
+      </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;margin:0 0 16px 0;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.06);">
+  <tr>
+    <td style="padding:18px 20px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="100" valign="top" style="padding-right:16px;">
+            
+            <img src="https://i.ebayimg.com/images/g/B54AAeSw1w5qTR-f/s-l500.webp" alt="" width="84" height="118" style="display:block;width:84px;height:118px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;background:linear-gradient(135deg,#eef2f7,#dbe2ec);">
+            
+          </td>
+          <td valign="top">
+      <div style="font:600 15px/1.35 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;margin:0 0 4px 0;">2023 Select Victor Wembanyama Red Cracked Ice Prizm #87</div>
+      <div style="margin:0 0 12px 0;">
+        <span style="display:inline-block;font:600 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e3a8a;background:#e0e7ff;padding:5px 9px;border-radius:999px;">PSA 10 target</span>
+      </div>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px 0;">
+        <tr>
+          <td style="padding-right:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">Expected profit</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f7b33;">$68.75</div>
+          </td>
+          <td style="padding-right:18px;border-left:1px solid #eef0f3;padding-left:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">ROI</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">26.4%</div>
+          </td>
+          <td style="border-left:1px solid #eef0f3;padding-left:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">Raw range</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">$140–$600</div>
+          </td>
+        </tr>
+      </table>
+
+      <div style="font:400 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;margin:0 0 4px 0;">
+        <strong style="color:#111827;">Gem rate</strong> 80.7% <span style="color:#9ca3af;">(pop 2081)</span>
+        &nbsp;&middot;&nbsp;
+        <strong style="color:#111827;">PSA 10</strong> $349.99 <span style="color:#9ca3af;">(n=61)</span>
+        &nbsp;&middot;&nbsp;
+        <strong style="color:#111827;">PSA 9</strong> $147.50 <span style="color:#9ca3af;">(n=14)</span>
+      </div>
+      <div style="font:400 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;margin:0 0 4px 0;">
+        <strong style="color:#111827;">Raw median</strong> $240.00 <span style="color:#9ca3af;">(n=18)</span>
+      </div>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:12px;">
+        <tr>
+          <td valign="middle">
+            <span style="display:inline-block;font:600 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f7b33;background:#e7f5ec;padding:5px 9px;border-radius:999px;text-transform:capitalize;">&#9679; high confidence</span>
+          </td>
+          <td valign="middle" align="right" style="white-space:nowrap;">
+            <a href="https://www.ebay.com/sch/i.html?_nkw=Victor+Wembanyama+2023+Select+Red+Cracked+Ice+Prizm+-PSA+-BGS+-SGC+-CGC&amp;_sacat=212&amp;Sport=Basketball&amp;_ipg=240" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#ffffff;background:#2563eb;padding:10px 16px;border-radius:8px;text-decoration:none;">Browse raw copies &rarr;</a>
+            <a href="https://www.ebay.com/sch/i.html?_nkw=Victor+Wembanyama+2023+Select+Red+Cracked+Ice+Prizm+PSA+10&amp;LH_Sold=1&amp;LH_Complete=1&amp;_sacat=212&amp;Sport=Basketball" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;background:#f3f4f6;border:1px solid #d1d5db;padding:9px 15px;border-radius:8px;text-decoration:none;margin-left:8px;">Sold comps</a>
+            <a href="https://www.ebay.com/p/17067694872" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;background:#f3f4f6;border:1px solid #d1d5db;padding:9px 15px;border-radius:8px;text-decoration:none;margin-left:8px;">Exact card</a>
+          </td>
+        </tr>
+      </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;margin:0 0 16px 0;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.06);">
+  <tr>
+    <td style="padding:18px 20px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="100" valign="top" style="padding-right:16px;">
+            
+            <img src="https://i.ebayimg.com/images/g/YcgAAeSwANVpKjyF/s-l500.webp" alt="" width="84" height="118" style="display:block;width:84px;height:118px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;background:linear-gradient(135deg,#eef2f7,#dbe2ec);">
+            
+          </td>
+          <td valign="top">
+      <div style="font:600 15px/1.35 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;margin:0 0 4px 0;">2020 Prizm Tyrese Haliburton Silver Prizm #262</div>
+      <div style="margin:0 0 12px 0;">
+        <span style="display:inline-block;font:600 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e3a8a;background:#e0e7ff;padding:5px 9px;border-radius:999px;">PSA 10 target</span>
+      </div>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px 0;">
+        <tr>
+          <td style="padding-right:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">Expected profit</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f7b33;">$30.87</div>
+          </td>
+          <td style="padding-right:18px;border-left:1px solid #eef0f3;padding-left:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">ROI</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">34.7%</div>
+          </td>
+          <td style="border-left:1px solid #eef0f3;padding-left:18px;">
+            <div style="font:500 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">Raw range</div>
+            <div style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">$4–$200</div>
+          </td>
+        </tr>
+      </table>
+
+      <div style="font:400 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;margin:0 0 4px 0;">
+        <strong style="color:#111827;">Gem rate</strong> 16.9% <span style="color:#9ca3af;">(pop 2704)</span>
+        &nbsp;&middot;&nbsp;
+        <strong style="color:#111827;">PSA 10</strong> $370.00 <span style="color:#9ca3af;">(n=7)</span>
+        &nbsp;&middot;&nbsp;
+        <strong style="color:#111827;">PSA 9</strong> $57.00 <span style="color:#9ca3af;">(n=22)</span>
+      </div>
+      <div style="font:400 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;margin:0 0 4px 0;">
+        <strong style="color:#111827;">Raw median</strong> $69.00 <span style="color:#9ca3af;">(n=41)</span>
+      </div>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:12px;">
+        <tr>
+          <td valign="middle">
+            <span style="display:inline-block;font:600 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f7b33;background:#e7f5ec;padding:5px 9px;border-radius:999px;text-transform:capitalize;">&#9679; high confidence</span>
+          </td>
+          <td valign="middle" align="right" style="white-space:nowrap;">
+            <a href="https://www.ebay.com/sch/i.html?_nkw=Tyrese+Haliburton+2020+Prizm+Silver+Prizm+-PSA+-BGS+-SGC+-CGC&amp;_sacat=212&amp;Sport=Basketball&amp;_ipg=240" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#ffffff;background:#2563eb;padding:10px 16px;border-radius:8px;text-decoration:none;">Browse raw copies &rarr;</a>
+            <a href="https://www.ebay.com/sch/i.html?_nkw=Tyrese+Haliburton+2020+Prizm+Silver+Prizm+PSA+10&amp;LH_Sold=1&amp;LH_Complete=1&amp;_sacat=212&amp;Sport=Basketball" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;background:#f3f4f6;border:1px solid #d1d5db;padding:9px 15px;border-radius:8px;text-decoration:none;margin-left:8px;">Sold comps</a>
+            <a href="https://www.ebay.com/p/18056557458" target="_blank" rel="noopener noreferrer" style="display:inline-block;white-space:nowrap;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#374151;background:#f3f4f6;border:1px solid #d1d5db;padding:9px 15px;border-radius:8px;text-decoration:none;margin-left:8px;">Exact card</a>
+          </td>
+        </tr>
+      </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+          </td></tr>
+          
+
+          
+
+          <!-- footer -->
+          <tr>
+            <td style="padding:18px 6px 4px 6px;">
+              <div style="font:400 12px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:14px;">
+                Figures are estimates from raw asking prices, sold comps, and PSA population data; sample sizes (n=) and the confidence flag indicate how solid each number is. Verify card condition from the listing photos before buying.
+                
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
