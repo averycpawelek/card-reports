@@ -48,9 +48,9 @@
       <tr><th>Card</th><th class="num">Raw (median)</th><th class="num">PSA-10</th><th class="num">Spread</th><th class="num">Gem rate</th><th class="num">Expected profit*</th><th>Verdict under criteria</th></tr>
       <tr>
         <td>2018-19 Prizm SGA Silver #184</td>
-        <td class="num">$425 (n=8)</td><td class="num">$2,849</td>
-        <td class="num pass">6.7&times;</td><td class="num fail">16%</td>
-        <td class="num">+$359</td>
+        <td class="num">$425 (n=17)</td><td class="num">$3,000 (n=32)</td>
+        <td class="num pass">7.1&times;</td><td class="num fail">16%</td>
+        <td class="num">+$382</td>
         <td><span class="fail">REJECTED</span> &mdash; gem &lt; 45%</td>
       </tr>
       <tr>
@@ -82,13 +82,13 @@
   <h2>Recommendation</h2>
   <div class="card rec">
     <p style="margin:0 0 8px"><b>Keep as hard gates:</b> raw $250&ndash;750 (capital per card), &ge;8 raw copies (entry liquidity), season 2018-19+ (modern focus). These are operational constraints and they filter cheaply and correctly.</p>
-    <p style="margin:0 0 8px"><b>Replace the gem bar + spread bar with the profit math they're standing in for.</b> The pipeline already computes expected profit using each card's actual gem rate and actual prices. A gate of <code>expected profit &ge; $200 AND ROI &ge; 50%</code> passes both exhibits above (+$359 / 91% ROI and +$676 / 91% ROI) and still rejects every low-gem low-spread dud &mdash; the math punishes a 16% gem rate exactly in proportion to what it costs.</p>
+    <p style="margin:0 0 8px"><b>Replace the gem bar + spread bar with the profit math they're standing in for.</b> The pipeline already computes expected profit using each card's actual gem rate and actual prices. A gate of <code>expected profit &ge; $200 AND ROI &ge; 50%</code> passes both exhibits above (+$382 / 86% ROI and +$676 / 91% ROI) and still rejects every low-gem low-spread dud &mdash; the math punishes a 16% gem rate exactly in proportion to what it costs.</p>
     <p style="margin:0"><b>If you want a floor anyway:</b> gem &ge; 25% <i>or</i> spread &ge; 4&times; (either extreme can carry the EV) plus the profit gate. Today that yields the same two buys.</p>
   </div>
 
   <h2>Caveats</h2>
   <div class="card">
-    <p style="margin:0 0 8px"><b>Thin comps:</b> several in-band PSA-10 medians rest on 1 sale (eBay only shows ~45 days of solds). The weekly cadence will accumulate history; treat n=1 rows as leads to verify, not orders.</p>
+    <p style="margin:0 0 8px"><b>Comp depth:</b> the exhibits above are re-verified with ~6 months of sold history behind each figure (SGA: 32 PSA-10 sales, 17 live raw copies). The sweep-wide funnel counts on this page were measured with an earlier, shallower comp pass and will be re-measured on the next full sweep &mdash; expect the per-gate counts to shift, not the shape of the argument.</p>
     <p style="margin:0"><b>Coverage:</b> 100 valuation slots per run against ~8,700 in-band models. Slots are cheap now (~2 unlocker credits each); if the tuned criteria pass more cards, we raise the cap, not the player list.</p>
   </div>
 </div>
