@@ -139,6 +139,34 @@
   </div>
   <div class="note" id="simnote" style="margin:6px 2px 0"></div>
 
+  <div class="card">
+    <div class="grouplabel">Compounding projection — 5 years</div>
+    <div class="controls">
+      <div>
+        <label for="reinvest">Profits reinvested <b id="reinvest-v"></b></label>
+        <input type="range" id="reinvest" min="0" max="100" step="5" value="100">
+        <div class="hint"><span class="tip" data-tip="Each cycle ends with your capital back plus profit. This slider sets how much of the PROFIT rolls into the next cycle's bankroll; the rest is withdrawn as income. 100% = maximum compounding; 0% = the bankroll stays flat and every cycle's profit is take-home.">% of each cycle's profit rolled into the next cycle</span></div>
+      </div>
+      <div>
+        <label for="capacity">Market capacity ($)</label>
+        <input type="number" id="capacity" min="0" step="1000" placeholder="auto: today's investable market">
+        <div class="hint"><span class="tip" data-tip="The projection's reality check: a bankroll can only deploy into cards that exist. Blank = today's investable universe (every copy of every +EV card at current settings). Once the bankroll outgrows this, the excess sits idle at 0% — which is what stops '325%/yr for 5 years' from projecting millions. Raise it if you believe sourcing (more products, more players, other sports) will grow the pool.">the pool of buyable +EV cards — growth stops here</span></div>
+      </div>
+    </div>
+    <div class="stats" style="margin-top:12px">
+      <div class="stat"><div class="v" id="p-monthly">–</div><div class="k"><span class="tip" data-tip="(1 + reinvested share x cycle return)^(1/cycle months) − 1: the smooth monthly rate your settings imply while the bankroll still fits inside market capacity.">monthly compounded return</span></div></div>
+      <div class="stat"><div class="v" id="p-capped">–</div><div class="k"><span class="tip" data-tip="When reinvestment first hits the market-capacity ceiling. From then on the working bankroll is maxed and ALL profit above the ceiling flows out as income — the operation becomes a cash machine of fixed size rather than a growing one.">outgrows the market</span></div></div>
+    </div>
+    <div class="scroll" style="margin-top:10px"><table>
+      <thead><tr><th>after</th>
+        <th class="num"><span class="tip" data-tip="Capital working in cards at that point (reinvested profits included), capped at market capacity.">bankroll working</span></th>
+        <th class="num"><span class="tip" data-tip="Cumulative profit taken out as income (the non-reinvested share).">withdrawn to date</span></th>
+        <th class="num"><span class="tip" data-tip="bankroll + withdrawn − what you started with.">total profit</span></th></tr></thead>
+      <tbody id="projrows"></tbody>
+    </table></div>
+    <div class="note" id="projnote"></div>
+  </div>
+
   <div class="card scroll">
     <table>
       <thead><tr>
@@ -350,6 +378,58 @@ function refresh() {
   $("s-ev").textContent = "+" + fmt(mc.mean);
   $("s-loss").textContent = (mc.pLoss * 100).toFixed(1) + "%";
   $("s-range").textContent = fmt(mc.p10) + " – " + fmt(mc.p90);
+  // ---- 5-year compounding projection (Jake's request) ----
+  const knownForProj = picks.filter(([c]) => c.cycle != null);
+  const rho = (+$("reinvest").value) / 100;
+  $("reinvest-v").textContent = $("reinvest").value + "%";
+  const autoCap = cards.filter(c => c.mu > 0)
+    .reduce((a, c) => a + c.cost * c.supply, 0);
+  const cap2 = (+$("capacity").value) > 0 ? +$("capacity").value : autoCap;
+  if (knownForProj.length && spent > 0) {
+    const kSp = knownForProj.reduce((a, [c, n]) => a + n * c.cost, 0);
+    const T = knownForProj.reduce((a, [c, n]) => a + c.cycle * n * c.cost, 0) / kSp;
+    const r = mc.mean / spent;  // expected return per cycle at current settings
+    let bank = Math.min(bankroll, cap2), wd = Math.max(0, bankroll - cap2),
+        m = 0, cappedAt = bankroll > cap2 ? 0 : null;
+    const marks = {};
+    for (let year = 1; year <= 5 && T > 0;) {
+      const profit = r * bank;
+      // Reinvest only what the market can absorb; profit that can't redeploy
+      // is FORCED income — that's what stops exponential fantasy numbers.
+      const reinv = Math.min(rho * profit, Math.max(0, cap2 - bank));
+      if (reinv < rho * profit - 1e-9 && cappedAt === null) cappedAt = m;
+      wd += profit - reinv;
+      bank += reinv;
+      m += T;
+      while (year <= 5 && m >= year * 12) { marks[year] = { bank, wd }; year++; }
+    }
+    const monthly = Math.pow(1 + rho * r, 1 / T) - 1;
+    $("p-monthly").textContent = (monthly * 100).toFixed(1) + "%/mo";
+    $("p-capped").textContent = cappedAt === null ? "never (5 yrs)"
+      : "~month " + Math.max(1, Math.round(cappedAt));
+    const pr = $("projrows");
+    pr.innerHTML = "";
+    for (let y = 1; y <= 5; y++) {
+      const mk = marks[y];
+      if (!mk) continue;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${y} year${y > 1 ? "s" : ""}</td>` +
+        `<td class="num">${fmt(mk.bank)}</td>` +
+        `<td class="num">${fmt(mk.wd)}</td>` +
+        `<td class="num">${fmt(mk.bank + mk.wd - bankroll)}</td>`;
+      pr.appendChild(tr);
+    }
+    $("projnote").textContent =
+      `Assumes every cycle redeploys into opportunities as good as today's — the weekly scan keeps testing that. ` +
+      `Market capacity ${(+$("capacity").value) > 0 ? "set by you" : "auto"}: ${fmt(cap2)} ` +
+      `(today's investable universe at current settings). Expected values, not guarantees; ` +
+      `the per-cycle range stat above shows the spread around each step.`;
+  } else {
+    $("p-monthly").textContent = "?";
+    $("p-capped").textContent = "?";
+    $("projrows").innerHTML = "";
+    $("projnote").textContent = "Projection needs measured sale queues (cycle data) for the picked cards.";
+  }
   const known = picks.filter(([c]) => c.cycle != null);
   if (known.length && spent > 0) {
     const kSpend = known.reduce((a, [c, n]) => a + n * c.cost, 0);
@@ -362,7 +442,7 @@ function refresh() {
   }
 }
 
-for (const id of ["bankroll", "risk", "cap", "recovery", "rankmode", "subfee", "upcharge", "gemtrust", "gradedays", "logdays"])
+for (const id of ["bankroll", "risk", "cap", "recovery", "rankmode", "subfee", "upcharge", "gemtrust", "gradedays", "logdays", "reinvest", "capacity"])
   $(id).addEventListener("input", refresh);
 refresh();
 
