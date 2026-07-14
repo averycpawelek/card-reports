@@ -1,0 +1,96 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow"><title>Method Comparison</title>
+<style>
+:root { --ink:#1a1d24; --sub:#5a6272; --line:#e4e7ee; --accent:#0f6b3f; --card:#fff; --bg:#f5f6f9; }
+* { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; }
+.wrap { max-width:900px; margin:0 auto; padding:32px 20px 64px; }
+h1 { font-size:25px; margin:0 0 4px; } .sub { color:var(--sub); margin-bottom:20px; font-size:14.5px; }
+.tabs { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0; }
+.tab { font:600 13.5px/1.3 inherit; padding:10px 14px; border:1px solid var(--line); border-radius:10px;
+  background:var(--card); cursor:pointer; text-align:left; }
+.tab span { display:block; font-weight:400; font-size:12px; color:var(--sub); }
+.tab.active { border-color:var(--accent); box-shadow:0 0 0 2px #0f6b3f22; }
+.panel { display:none; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px; }
+.panel.active { display:block; }
+.rule { font-size:15px; margin:0 0 14px; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:14px; }
+.stat { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+.stat .v { font-size:19px; font-weight:700; } .stat .k { color:var(--sub); font-size:12px; }
+table { border-collapse:collapse; width:100%; font-size:13.5px; }
+th,td { text-align:left; padding:6px 9px; border-bottom:1px solid var(--line); white-space:nowrap; }
+th { color:var(--sub); font-weight:600; font-size:11.5px; text-transform:uppercase; }
+.num { text-align:right; font-variant-numeric:tabular-nums; } .scroll { overflow-x:auto; }
+.consensus { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:10px; padding:14px 20px; margin-top:18px; }
+.consensus ul { margin:8px 0 0; padding-left:18px; } .consensus li { margin:4px 0; }
+.foot { color:var(--sub); font-size:12.5px; margin-top:16px; }
+</style></head><body><div class="wrap">
+<h1>Method Comparison</h1>
+<div class="sub">Same eBay snapshot (2026-07-08), same $5,000 — five different ways of deciding what to buy.
+Every number already includes eBay's 13.25% selling fee and real PSA grading fees (big cards pay bigger fees).
+Click through and compare.</div>
+<div class="tabs"><button class="tab active" data-panel="p0">The original rules<span>0 cards</span></button>
+<button class="tab" data-panel="p1">The original rules, $100 minimum<span>2 cards</span></button>
+<button class="tab" data-panel="p2">Jake&#x27;s floor: 50% gem minimum<span>1 cards</span></button>
+<button class="tab" data-panel="p3">The 150%-gain + 35%-gem idea<span>3 cards</span></button>
+<button class="tab" data-panel="p4">Profit math only<span>3 cards</span></button>
+<button class="tab" data-panel="p5">The paranoid test<span>4 cards</span></button>
+</div>
+<div class="panel active" id="p0"><p class="rule">Gem rate at least 45%, sell for at least 3× the buy price, 8+ copies available, 2018 or newer, buy price $250–$750.</p><div class="stats"><div class="stat"><div class="v">0 cards</div><div class="k">nothing on the market passes this rule</div></div></div></div>
+<div class="panel" id="p1"><p class="rule">Exactly the same five rules — the only change is allowing cards from $100 instead of $250.</p>
+<div class="stats">
+ <div class="stat"><div class="v">+$2,544</div><div class="k">expected profit on $5,000</div></div>
+ <div class="stat"><div class="v">0%</div><div class="k">chance of losing money</div></div>
+ <div class="stat"><div class="v">$1,780 – $3,350</div><div class="k">likely range of outcomes</div></div>
+ <div class="stat"><div class="v">6 of 10</div><div class="k">cards bought that gem PSA 10</div></div>
+ <div class="stat"><div class="v">4.4 mo</div><div class="k">money locked up (avg)</div></div>
+</div><div class="scroll"><table><tr><th>card</th><th class="num">buy</th><th class="num">price</th><th class="num">gem</th><th class="num">sells for</th><th class="num">profit each</th></tr><tr><td>2023 2023-24 Panini Select Victor Wembanyama Blue Cracked Ice Prizm #87</td><td class="num">16</td><td class="num">$106</td><td class="num">69%</td><td class="num">3.1×</td><td class="num">+$99</td></tr><tr><td>2018 2018-19 Panini Prizm Jalen Brunson Pink Ice Prizm #250</td><td class="num">9</td><td class="num">$195</td><td class="num">46%</td><td class="num">3.3×</td><td class="num">+$107</td></tr></table></div></div>
+<div class="panel" id="p2"><p class="rule">Only cards where at least half the graded copies come back PSA 10 — no other profit rules. ($100 minimum, shared basics.)</p>
+<div class="stats">
+ <div class="stat"><div class="v">+$1,578</div><div class="k">expected profit on $5,000</div></div>
+ <div class="stat"><div class="v">0%</div><div class="k">chance of losing money</div></div>
+ <div class="stat"><div class="v">$1,183 – $1,944</div><div class="k">likely range of outcomes</div></div>
+ <div class="stat"><div class="v">7 of 10</div><div class="k">cards bought that gem PSA 10</div></div>
+ <div class="stat"><div class="v">4.9 mo</div><div class="k">money locked up (avg)</div></div>
+</div><div class="scroll"><table><tr><th>card</th><th class="num">buy</th><th class="num">price</th><th class="num">gem</th><th class="num">sells for</th><th class="num">profit each</th></tr><tr><td>2023 2023-24 Panini Select Victor Wembanyama Blue Cracked Ice Prizm #87</td><td class="num">16</td><td class="num">$106</td><td class="num">69%</td><td class="num">3.1×</td><td class="num">+$99</td></tr></table></div></div>
+<div class="panel" id="p3"><p class="rule">Sell for at least 2.5× the buy price AND at least a 35% gem rate. ($100 minimum.)</p>
+<div class="stats">
+ <div class="stat"><div class="v">+$3,260</div><div class="k">expected profit on $5,000</div></div>
+ <div class="stat"><div class="v">0%</div><div class="k">chance of losing money</div></div>
+ <div class="stat"><div class="v">$2,375 – $4,161</div><div class="k">likely range of outcomes</div></div>
+ <div class="stat"><div class="v">5 of 10</div><div class="k">cards bought that gem PSA 10</div></div>
+ <div class="stat"><div class="v">4.3 mo</div><div class="k">money locked up (avg)</div></div>
+</div><div class="scroll"><table><tr><th>card</th><th class="num">buy</th><th class="num">price</th><th class="num">gem</th><th class="num">sells for</th><th class="num">profit each</th></tr><tr><td>2023 2023-24 Panini Select Victor Wembanyama Blue Cracked Ice Prizm #87</td><td class="num">16</td><td class="num">$106</td><td class="num">69%</td><td class="num">3.1×</td><td class="num">+$99</td></tr><tr><td>2018 2018-19 Panini Prizm Jalen Brunson Red White &amp; Blue Prizm #250</td><td class="num">16</td><td class="num">$100</td><td class="num">42%</td><td class="num">4.0×</td><td class="num">+$76</td></tr><tr><td>2020 2020-21 Panini Prizm Anthony Edwards Pink Ice Prizm #258</td><td class="num">7</td><td class="num">$127</td><td class="num">37%</td><td class="num">3.5×</td><td class="num">+$66</td></tr></table></div></div>
+<div class="panel" id="p4"><p class="rule">No gem or spread rules at all — just: expected profit ≥ $100 per card and ≥ 50% return, after every fee.</p>
+<div class="stats">
+ <div class="stat"><div class="v">+$3,561</div><div class="k">expected profit on $5,000</div></div>
+ <div class="stat"><div class="v">2%</div><div class="k">chance of losing money</div></div>
+ <div class="stat"><div class="v">$1,024 – $6,229</div><div class="k">likely range of outcomes</div></div>
+ <div class="stat"><div class="v">2 of 10</div><div class="k">cards bought that gem PSA 10</div></div>
+ <div class="stat"><div class="v">4.7 mo</div><div class="k">money locked up (avg)</div></div>
+</div><div class="scroll"><table><tr><th>card</th><th class="num">buy</th><th class="num">price</th><th class="num">gem</th><th class="num">sells for</th><th class="num">profit each</th></tr><tr><td>2020 2020-21 Panini Prizm LeBron James Silver Prizm #1</td><td class="num">11</td><td class="num">$155</td><td class="num">20%</td><td class="num">8.8×</td><td class="num">+$159</td></tr><tr><td>2018 2018-19 Panini Prizm Jalen Brunson Silver Prizm #250</td><td class="num">7</td><td class="num">$255</td><td class="num">30%</td><td class="num">4.9×</td><td class="num">+$190</td></tr><tr><td>2018 2018-19 Panini Prizm Shai Gilgeous-Alexander Silver Prizm #184</td><td class="num">2</td><td class="num">$425</td><td class="num">16%</td><td class="num">7.1×</td><td class="num">+$234</td></tr></table></div></div>
+<div class="panel" id="p5"><p class="rule">Only cards that STILL make money if every non-gem turns out to be worth $0. The sleep-well set.</p>
+<div class="stats">
+ <div class="stat"><div class="v">+$4,047</div><div class="k">expected profit on $5,000</div></div>
+ <div class="stat"><div class="v">0%</div><div class="k">chance of losing money</div></div>
+ <div class="stat"><div class="v">$2,155 – $6,120</div><div class="k">likely range of outcomes</div></div>
+ <div class="stat"><div class="v">5 of 10</div><div class="k">cards bought that gem PSA 10</div></div>
+ <div class="stat"><div class="v">5.2 mo</div><div class="k">money locked up (avg)</div></div>
+</div><div class="scroll"><table><tr><th>card</th><th class="num">buy</th><th class="num">price</th><th class="num">gem</th><th class="num">sells for</th><th class="num">profit each</th></tr><tr><td>2020 2020-21 Panini Prizm LeBron James Silver Prizm #1</td><td class="num">11</td><td class="num">$155</td><td class="num">20%</td><td class="num">8.8×</td><td class="num">+$159</td></tr><tr><td>2023 2023-24 Panini Select Victor Wembanyama Blue Cracked Ice Prizm #87</td><td class="num">16</td><td class="num">$106</td><td class="num">69%</td><td class="num">3.1×</td><td class="num">+$99</td></tr><tr><td>2018 2018-19 Panini Prizm Jalen Brunson Silver Prizm #250</td><td class="num">3</td><td class="num">$255</td><td class="num">30%</td><td class="num">4.9×</td><td class="num">+$190</td></tr><tr><td>2018 2018-19 Panini Prizm Jalen Brunson Red White &amp; Blue Prizm #250</td><td class="num">2</td><td class="num">$100</td><td class="num">42%</td><td class="num">4.0×</td><td class="num">+$76</td></tr></table></div></div>
+
+<div class="consensus"><b>Cards most rulebooks agree on</b> — picked by 3 or more of the 5:
+<ul><li><b>4/5 rulebooks</b> — 2023 2023-24 Panini Select Victor Wembanyama Blue Cracked Ice Prizm #87</li></ul>
+These are the buys that don't depend on which philosophy wins the argument.</div>
+<div class="foot">"Expected profit" is the average over 20,000 simulated portfolios where each card gems at its
+PSA-population rate (adjusted down for small samples). Gem rates come from PSA's own published population data —
+and published rates run optimistic, because people pre-screen before grading. The <a href="allocator.html">allocator</a>
+has sliders to stress every assumption on this page.</div>
+</div>
+<script>
+for (const b of document.querySelectorAll(".tab")) b.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  b.classList.add("active");
+  document.getElementById(b.dataset.panel).classList.add("active");
+});
+</script></body></html>

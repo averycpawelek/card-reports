@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Bankroll Allocator</title>
+<style>
+  :root { --ink:#1a1d24; --sub:#5a6272; --line:#e4e7ee; --accent:#0f6b3f; --warn:#a33; --card:#fff; --bg:#f5f6f9; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:1020px; margin:0 auto; padding:32px 20px 64px; }
+  h1 { font-size:26px; margin:0 0 4px; }
+  .sub { color:var(--sub); margin-bottom:24px; font-size:14.5px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin:14px 0; }
+  .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:18px; }
+  label { display:block; font-weight:600; font-size:13.5px; margin-bottom:6px; }
+  label b { float:right; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; }
+  input[type=range] { width:100%; }
+  input[type=number] { width:100%; font:600 15px/1 inherit; padding:8px 10px; border:1px solid var(--line); border-radius:8px; }
+  .hint { color:var(--sub); font-size:12px; margin-top:3px; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; }
+  th, td { text-align:left; padding:6px 9px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th { color:var(--sub); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
+  .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .stat { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .stat .v { font-size:20px; font-weight:700; }
+  .stat .k { color:var(--sub); font-size:12px; }
+  .scroll { overflow-x:auto; }
+  .note { color:var(--sub); font-size:12.5px; margin-top:10px; }
+  .grouplabel { font-weight:700; font-size:13px; color:var(--sub); text-transform:uppercase; letter-spacing:.05em; margin:2px 0 10px; }
+  details { margin:14px 0; }
+  details > summary { cursor:pointer; font-weight:700; font-size:15px; padding:14px 20px; background:var(--card); border:1px solid var(--line); border-radius:10px; list-style:none; }
+  details > summary::before { content:"▸ "; color:var(--accent); }
+  details[open] > summary::before { content:"▾ "; }
+  details[open] > summary { border-radius:10px 10px 0 0; border-bottom:none; }
+  .details-body { background:var(--card); border:1px solid var(--line); border-top:none; border-radius:0 0 10px 10px; padding:16px 20px; }
+  .formula { background:#eef1f6; border-radius:6px; padding:10px 14px; font:13.5px/1.6 ui-monospace,Menlo,monospace; margin:8px 0; overflow-x:auto; }
+  .tip { cursor:help; border-bottom:1px dotted var(--sub); }
+  /* Tooltips render into ONE fixed-position box appended to <body>, so they
+     can never be clipped by scrolling tables/cards, and get clamped to the
+     viewport near edges. */
+  #tipbox { position:fixed; display:none; z-index:50; background:#22262e; color:#fff;
+    padding:9px 11px; border-radius:7px; max-width:280px;
+    font:400 12px/1.45 -apple-system,"Segoe UI",Roboto,sans-serif; white-space:normal;
+    text-transform:none; letter-spacing:0; pointer-events:none; text-align:left;
+    box-shadow:0 4px 14px rgba(0,0,0,.25); }
+  h3 { font-size:15px; margin:16px 0 6px; }
+  .muted { color:var(--sub); }
+  /* toggle switch for boolean settings */
+  .switch { position:relative; display:inline-block; width:46px; height:26px; vertical-align:middle; cursor:pointer; }
+  .switch input { opacity:0; width:0; height:0; }
+  .knob { position:absolute; cursor:pointer; inset:0; background:#c9cfda; border-radius:26px; transition:.15s; }
+  .knob::before { content:""; position:absolute; height:20px; width:20px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:.15s; box-shadow:0 1px 2px rgba(0,0,0,.25); }
+  .switch input:checked + .knob { background:var(--accent); }
+  .switch input:checked + .knob::before { transform:translateX(20px); }
+  .switchrow { display:flex; align-items:center; gap:10px; min-height:38px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bankroll Allocator</h1>
+  <div class="sub">Market snapshot: July 8, 2026 &middot; investable cards = every card with a
+    <span class="tip" data-tip="Expected profit per copy is positive after eBay's 13.25% final value fee and tiered PSA grading fees (wins on big cards are upcharged to their value tier), using the card's real PSA gem rate.">positive expected profit net of all costs</span>
+    &middot; everything recomputes live</div>
+
+  <div class="card">
+    <div class="grouplabel">Portfolio</div>
+    <div class="controls">
+      <div>
+        <label for="bankroll">Bankroll ($)</label>
+        <input type="number" id="bankroll" min="0" step="100" value="5000">
+        <div class="hint">total to deploy — card costs <i>and</i> submission fees come out of this</div>
+      </div>
+      <div>
+        <label for="risk">Risk tolerance <b id="risk-v"></b></label>
+        <input type="range" id="risk" min="0" max="10" step="0.5" value="7">
+        <div class="hint"><span class="tip" data-tip="Internally: variance penalty λ = (10 − tolerance) × 0.0001 in the ranking score (μ − λσ²)/cost. At 10, pure expected profit per dollar; lower prefers steadier high-gem cards.">right = max expected profit; left = steadier cards</span></div>
+      </div>
+      <div>
+        <label for="cap">Max per player <b id="cap-v"></b></label>
+        <input type="range" id="cap" min="10" max="100" step="5" value="40">
+        <div class="hint"><span class="tip" data-tip="All cards of one player move together on news (injury, trade). Copies diversify GRADING luck, not this market risk — so no player gets more than this share of the bankroll.">cards of one player move together — cap the exposure</span></div>
+      </div>
+      <div>
+        <label for="recovery">Miss resale value <b id="recovery-v"></b></label>
+        <input type="range" id="recovery" min="0" max="100" step="5" value="100">
+        <div class="hint"><span class="tip" data-tip="Share of the RAW price recovered when a card misses PSA 10 (resell raw or as a 9). 100% = optimistic (miss costs fees + grading only); 0% = a missed card is worthless. Reality is usually 60–90%; drag left to stress-test.">% of raw a non-gem recovers — drag left to stress-test</span></div>
+      </div>
+      <div>
+        <label>Rank by profit per dollar-month <b id="rankmode-v"></b></label>
+        <div class="switchrow">
+          <label class="switch"><input type="checkbox" id="rankmode"><span class="knob"></span></label>
+        </div>
+        <div class="hint"><span class="tip" data-tip="OFF: profit per dollar — the best use of the bankroll for ONE round trip. ON: each card's score is divided by its cycle — the best use of money that RECYCLES, so slow cards (long sale queues) get demoted even when their one-trip profit is great. Cards with unmeasured sale queues conservatively assume the slowest known cycle.">per dollar = one trip; per dollar-month = compounding</span></div>
+      </div>
+    </div>
+    <div class="grouplabel" style="margin-top:18px">PSA grading <span class="tip" style="text-transform:none;font-weight:400" data-tip="Defaults follow PSA's published tiers — verify against your PSA account (rates change; bulk pricing needs club membership). Strategy modeled: submit every card at the cheap tier; PSA upcharges a card to its graded market value's tier, so wins on big cards pay more.">ⓘ</span></div>
+    <div class="controls">
+      <div>
+        <label for="subfee">Submission fee / card ($)</label>
+        <input type="number" id="subfee" min="0" step="1" value="19">
+        <div class="hint"><span class="tip" data-tip="What you pay PSA up front per card at the tier you submit through (bulk/value). Comes out of the stake for every card, win or miss.">the cheap-tier fee you actually front</span></div>
+      </div>
+      <div>
+        <label>Model upcharges <b id="upcharge-v"></b></label>
+        <div class="switchrow">
+          <label class="switch"><input type="checkbox" id="upcharge" checked><span class="knob"></span></label>
+        </div>
+        <div class="hint"><span class="tip" data-tip="ON: a card that gems into a higher value bracket pays that bracket's fee (>$500 → $75, >$1500 → $149, >$2500 → $299) — deducted from the win leg. OFF: every outcome pays only the submission fee (how most people wrongly model it).">ON = wins on big cards pay their value tier's fee</span></div>
+      </div>
+      <div>
+        <label for="gradedays">PSA turnaround (days)</label>
+        <input type="number" id="gradedays" min="1" step="1" value="60">
+        <div class="hint"><span class="tip" data-tip="Business-day turnaround for the tier you submit through, in calendar days. The bulk/value tiers run ~45–90 days depending on PSA's queue; express tiers are days. Affects timing stats only, not profit.">days your capital sits at PSA</span></div>
+      </div>
+      <div>
+        <label for="gemtrust">Trust in published gem rates <b id="gemtrust-v"></b></label>
+        <input type="range" id="gemtrust" min="40" max="100" step="5" value="100">
+        <div class="hint"><span class="tip" data-tip="PSA's published gem rates describe cards submitters PRE-SCREENED before paying to grade. Buying raw sight-unseen includes the copies a screener would have culled, so you realize only a share of the published rate. 100% = take PSA at face value; 70% = 'a fifth to a third of raw listings are cards someone already decided not to grade'. The first real submission calibrates this — until then it's the most honest worry-knob on the page.">% of the published rate you expect to realize (adverse selection)</span></div>
+      </div>
+      <div>
+        <label for="logdays">Logistics (days)</label>
+        <input type="number" id="logdays" min="0" step="1" value="18">
+        <div class="hint"><span class="tip" data-tip="Everything around grading: shipping to PSA, return shipping, photographing/listing, and eBay's payout delay.">ship + return + list + payout</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="v" id="s-spent">–</div><div class="k"><span class="tip" data-tip="Sum of copies × (raw median + submission fee). Usually a little under the bankroll.">deployed</span></div></div>
+    <div class="stat"><div class="v" id="s-ev">–</div><div class="k"><span class="tip" data-tip="Average total profit across 4,000 simulated portfolios (each copy independently gems at its shrinkage-adjusted rate; wins pay their value tier's PSA fee).">expected profit</span></div></div>
+    <div class="stat"><div class="v" id="s-loss">–</div><div class="k"><span class="tip" data-tip="Share of simulated portfolios ending below $0.">chance of losing money</span></div></div>
+    <div class="stat"><div class="v" id="s-range">–</div><div class="k"><span class="tip" data-tip="10th–90th percentile of simulated outcomes: 8 of 10 portfolios land inside this range.">likely range</span></div></div>
+    <div class="stat"><div class="v" id="s-cycle">–</div><div class="k"><span class="tip" data-tip="Capital-weighted average round trip: grading + logistics + each card's measured sale queue (live PSA-10 supply ÷ monthly sales). Your money is locked about this long.">capital locked (avg)</span></div></div>
+    <div class="stat"><div class="v" id="s-annual">–</div><div class="k"><span class="tip" data-tip="(1 + profit/deployed)^(12/cycle months) − 1 — the yearly rate IF each cycle's proceeds redeploy into equally good finds, which the weekly scan continually tests. Treat as a ceiling.">annualized (if redeployed)</span></div></div>
+  </div>
+  <div class="note" id="simnote" style="margin:6px 2px 0"></div>
+
+  <div class="card scroll">
+    <table>
+      <thead><tr>
+        <th>card</th>
+        <th class="num"><span class="tip" data-tip="How many raw copies to buy — limited by live supply, the per-player cap, or the bankroll, whichever binds first.">copies</span></th>
+        <th class="num"><span class="tip" data-tip="copies × (raw median + submission fee)">cost</span></th>
+        <th class="num"><span class="tip" data-tip="copies × expected profit per copy (a long-run average — see the range stat).">expected</span></th>
+        <th class="num"><span class="tip" data-tip="P(PSA 10) from PSA population data, shrunk toward 40% for small pops. Published rates are inflated by submitter pre-screening — treat as optimistic.">gem</span></th>
+        <th class="num"><span class="tip" data-tip="Buy → grade → sell round trip: (turnaround + logistics)/30.44 + this card's measured sale queue (live PSA-10 listings ÷ monthly sales). '?' = sale queue unmeasured for this card.">cycle</span></th>
+        <th class="num"><span class="tip" data-tip="Capital efficiency: expected profit per dollar per month locked (μ ÷ cost ÷ cycle). The number to compare against any other use of the money.">%/mo</span></th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="note">Buy links and full research per card are on the <a href="index.html">weekly report</a>. Copy counts for thin markets are "accumulate over weeks" targets — buying a whole supply in one day moves the price.</div>
+  </div>
+
+  <details id="math">
+    <summary>Show the math behind this result</summary>
+    <div class="details-body">
+      <h3>1 &middot; Each copy is a two-outcome bet with outcome-dependent PSA fees</h3>
+      <div class="formula" id="f-outcomes">win  (prob p):  profit = PSA10_price × (1 − 13.25% fee) − raw − fee(PSA10 value tier)<br>miss (prob 1 − p): profit = r × raw × (1 − fee) − raw − submission_fee<br>stake = raw_median + submission_fee&nbsp;&nbsp;&nbsp;&nbsp;<span class="muted" id="f-recovery"></span></div>
+      <p class="muted" style="font-size:13px">The upcharge mechanic: you submit at the cheap tier, and PSA bills a card that grades into a higher value bracket at that bracket's fee — so the win leg of a $3,000 card carries a ~$299 fee while its miss leg carries only the submission fee. p is the PSA population gem rate with small-sample shrinkage: (pop10 + 20 × 0.40) / (pop_total + 20).</p>
+
+      <h3>2 &middot; Per-copy expectation, spread, and clock</h3>
+      <div class="formula">μ = p × win + (1 − p) × miss&nbsp;&nbsp;&nbsp;&nbsp;σ² = p × (win − μ)² + (1 − p) × (miss − μ)²<br>cycle = (turnaround + logistics) ÷ 30.44 + sale_queue&nbsp;&nbsp;<span class="muted">sale_queue = live PSA-10 supply ÷ monthly sales, measured per card</span></div>
+
+      <h3>3 &middot; Ranking: risk-adjusted profit per dollar</h3>
+      <div class="formula" id="f-lambda"></div>
+      <p class="muted" style="font-size:13px">Greedy fill in score order; copies added until supply, the player cap, or the bankroll binds. Score ≤ 0 at this risk setting = excluded.</p>
+
+      <h3>4 &middot; The full ranking at the current settings</h3>
+      <div class="scroll"><table>
+        <thead><tr>
+          <th>#</th><th>card</th>
+          <th class="num">p</th><th class="num">win $</th>
+          <th class="num"><span class="tip" data-tip="The PSA fee the WIN leg pays after the upcharge to the card's graded value tier.">win fee</span></th>
+          <th class="num">miss $</th>
+          <th class="num">μ/copy</th><th class="num">σ/copy</th>
+          <th class="num"><span class="tip" data-tip="(μ − λσ²) ÷ cost — the greedy fill works down this column.">score/$</span></th>
+          <th class="num">copies</th><th>limited by</th>
+        </tr></thead>
+        <tbody id="mathrows"></tbody>
+      </table></div>
+
+      <h3>5 &middot; The outcome statistics</h3>
+      <p class="muted" style="font-size:13px">4,000 portfolios simulated: every copy independently gems with probability p. Reported: mean, share below $0, 10th/90th percentiles, plus the capital-weighted average cycle and the annualized rate if proceeds redeploy. NOT simulated: market prices moving during the lockup (the per-player cap is the guard), your own buying pressure on thin supply, and PSA turnaround variance — the days you enter are point estimates.</p>
+    </div>
+  </details>
+</div>
+<script>
+const CARDS = [{"label": "2023 2023-24 Panini Donruss Optic Victor Wembanyama Purple Prizm #225", "player": "Victor Wembanyama", "raw": 200.0, "psa10": 399.99, "cost": 218.99, "supply": 13, "p": 0.5731, "months": 1.9851, "x_win": 128.0013, "x_miss": -45.49, "mu": 53.9301, "var": 7364.1692}, {"label": "2023 2023-24 Panini Donruss Optic Victor Wembanyama Holo Prizm #225", "player": "Victor Wembanyama", "raw": 599.69, "psa10": 1063.0, "cost": 618.68, "supply": 9, "p": 0.4652, "months": 0.6993, "x_win": 247.4725, "x_miss": -98.4489, "mu": 62.4742, "var": 29770.5052}, {"label": "2023 2023-24 Panini Prizm Victor Wembanyama Green Prizm #136", "player": "Victor Wembanyama", "raw": 499.99, "psa10": 980.0, "cost": 518.98, "supply": 28, "p": 0.5259, "months": 0.6053, "x_win": 275.17, "x_miss": -85.2387, "mu": 104.3144, "var": 32386.205}, {"label": "2020 2020-21 Panini Prizm Anthony Edwards Silver Prizm #258", "player": "Anthony Edwards", "raw": 292.7, "psa10": 899.995, "cost": 311.69, "supply": 19, "p": 0.299, "months": 1.8163, "x_win": 413.0557, "x_miss": -57.7728, "mu": 83.01, "var": 46464.7305}, {"label": "2018 2018-19 Panini Prizm Jalen Brunson Red White & Blue Prizm #250", "player": "Jalen Brunson", "raw": 100.0, "psa10": 399.995, "cost": 118.99, "supply": 26, "p": 0.4157, "months": 0.9699, "x_win": 228.0057, "x_miss": -32.24, "mu": 75.9395, "var": 16450.4394}, {"label": "2018 2018-19 Panini Prizm Jalen Brunson Ruby Wave Prizm #250", "player": "Jalen Brunson", "raw": 159.99, "psa10": 399.995, "cost": 178.98, "supply": 13, "p": 0.4364, "months": 0.7444, "x_win": 168.0157, "x_miss": -40.1887, "mu": 50.6771, "var": 10662.0604}, {"label": "2018 2018-19 Panini Prizm Jalen Brunson Silver Prizm #250", "player": "Jalen Brunson", "raw": 255.0, "psa10": 1249.5, "cost": 273.99, "supply": 56, "p": 0.3015, "months": 0.9816, "x_win": 753.9512, "x_miss": -52.7775, "mu": 190.4742, "var": 137066.7497}, {"label": "2023 2023-24 Panini Select Victor Wembanyama Red Cracked Ice Prizm #87", "player": "Victor Wembanyama", "raw": 250.0, "psa10": 363.715, "cost": 268.99, "supply": 13, "p": 0.7994, "months": 0.9967, "x_win": 46.5328, "x_miss": -52.115, "mu": 26.7469, "var": 1560.3479}, {"label": "2023 2023-24 Panini Select Victor Wembanyama Orange Flash Prizm #87", "player": "Victor Wembanyama", "raw": 199.995, "psa10": 307.5, "cost": 218.985, "supply": 22, "p": 0.6133, "months": 0.5269, "x_win": 47.7712, "x_miss": -45.4893, "mu": 11.7084, "var": 2062.7135}, {"label": "2018 2018-19 Panini Prizm Shai Gilgeous-Alexander Ruby Wave Prizm #184", "player": "Shai Gilgeous-Alexander", "raw": 239.95, "psa10": 879.0, "cost": 258.94, "supply": 9, "p": 0.1755, "months": 0.565, "x_win": 447.5925, "x_miss": -50.7834, "mu": 36.6774, "var": 35938.9674}, {"label": "2019 2019-20 Panini Prizm Ja Morant Silver Prizm #249", "player": "Ja Morant", "raw": 124.99, "psa10": 250.0, "cost": 143.98, "supply": 25, "p": 0.3417, "months": 3.9891, "x_win": 72.895, "x_miss": -35.5512, "mu": 1.5093, "var": 2645.5887}, {"label": "2020 2020-21 Panini Prizm LeBron James Silver Prizm #1", "player": "LeBron James", "raw": 154.995, "psa10": 1359.995, "cost": 173.985, "supply": 16, "p": 0.2006, "months": 4.0, "x_win": 949.8107, "x_miss": -39.5268, "mu": 158.8897, "var": 156931.8224}, {"label": "2023 2023-24 Panini Select Victor Wembanyama Silver Prizm #121", "player": "Victor Wembanyama", "raw": 175.0, "psa10": 395.0, "cost": 193.99, "supply": 12, "p": 0.7434, "months": 1.9266, "x_win": 148.6725, "x_miss": -42.1775, "mu": 99.6974, "var": 6948.3412}, {"label": "2023 2023-24 Panini Prizm Draft Picks Victor Wembanyama Red Ice Prizm #2", "player": "Victor Wembanyama", "raw": 124.99, "psa10": 297.5, "cost": 143.98, "supply": 17, "p": 0.6413, "months": 0.8424, "x_win": 114.1012, "x_miss": -35.5512, "mu": 60.4162, "var": 5152.0126}, {"label": "2018 2018-19 Panini Prizm Shai Gilgeous-Alexander Silver Prizm #184", "player": "Shai Gilgeous-Alexander", "raw": 425.0, "psa10": 2999.0, "cost": 443.99, "supply": 13, "p": 0.1586, "months": 0.5623, "x_win": 1877.6325, "x_miss": -75.3025, "mu": 234.3808, "var": 508887.5954}, {"label": "2018 2018-19 Panini Prizm Shai Gilgeous-Alexander Red White & Blue Prizm #184", "player": "Shai Gilgeous-Alexander", "raw": 149.99, "psa10": 639.495, "cost": 168.98, "supply": 11, "p": 0.2885, "months": 1.3348, "x_win": 329.7819, "x_miss": -38.8637, "mu": 67.5063, "var": 27898.2442}, {"label": "2023 2023-24 Panini Prizm Monopoly Victor Wembanyama Purple Wave Prizm #81", "player": "Victor Wembanyama", "raw": 114.995, "psa10": 246.25, "cost": 133.985, "supply": 42, "p": 0.5417, "months": 1.7151, "x_win": 79.6369, "x_miss": -34.2268, "mu": 27.4558, "var": 3218.6667}, {"label": "2023 2023-24 Panini Prizm Victor Wembanyama Red White & Blue Prizm #136", "player": "Victor Wembanyama", "raw": 399.99, "psa10": 1187.995, "cost": 418.98, "supply": 13, "p": 0.231, "months": 0.0596, "x_win": 555.6057, "x_miss": -71.9887, "mu": 73.0036, "var": 69973.5739}, {"label": "2023 2023-24 Panini Select Victor Wembanyama Tectonic Prizm #87", "player": "Victor Wembanyama", "raw": 159.99, "psa10": 314.995, "cost": 178.98, "supply": 16, "p": 0.6763, "months": 2.0134, "x_win": 94.2782, "x_miss": -40.1887, "mu": 50.7492, "var": 3958.4326}, {"label": "2023 2023-24 Panini Select Victor Wembanyama Blue Cracked Ice Prizm #87", "player": "Victor Wembanyama", "raw": 105.805, "psa10": 325.0, "cost": 124.795, "supply": 16, "p": 0.6925, "months": 2.3129, "x_win": 157.1425, "x_miss": -33.0092, "mu": 98.6653, "var": 7699.9525}, {"label": "2018 2018-19 Panini Prizm Jalen Brunson Pink Ice Prizm #250", "player": "Jalen Brunson", "raw": 194.97, "psa10": 643.71, "cost": 213.96, "supply": 20, "p": 0.4565, "months": 1.3145, "x_win": 288.4584, "x_miss": -44.8235, "mu": 107.3269, "var": 27559.2394}, {"label": "2018 2018-19 Panini Chronicles Luka Don\u010di\u0107 [Base] #571", "player": "Luka Don\u010di\u0107", "raw": 120.0, "psa10": 204.0, "cost": 138.99, "supply": 13, "p": 0.4893, "months": 5.4054, "x_win": 37.98, "x_miss": -34.89, "mu": 0.7656, "var": 1326.9018}, {"label": "2023 2023-24 Panini Select Victor Wembanyama Silver Prizm #87", "player": "Victor Wembanyama", "raw": 129.95, "psa10": 333.0, "cost": 148.94, "supply": 29, "p": 0.6721, "months": 1.0923, "x_win": 139.9375, "x_miss": -36.2084, "mu": 82.1789, "var": 6837.8849}, {"label": "2020 2020-21 Panini Prizm Anthony Edwards Ruby Wave Prizm #258", "player": "Anthony Edwards", "raw": 129.99, "psa10": 334.0, "cost": 148.98, "supply": 14, "p": 0.3529, "months": 1.1327, "x_win": 140.765, "x_miss": -36.2137, "mu": 26.2336, "var": 7152.1714}, {"label": "2020 2020-21 Panini Prizm Anthony Edwards Red Ice Prizm #258", "player": "Anthony Edwards", "raw": 115.0, "psa10": 459.495, "cost": 133.99, "supply": 13, "p": 0.3023, "months": 1.7013, "x_win": 264.6219, "x_miss": -34.2275, "mu": 56.1223, "var": 18837.9009}, {"label": "2020 2020-21 Panini Prizm LeBron James Red Ice Prizm #1", "player": "LeBron James", "raw": 150.0, "psa10": 580.5, "cost": 168.99, "supply": 9, "p": 0.2932, "months": 1.3652, "x_win": 278.5937, "x_miss": -38.865, "mu": 54.2156, "var": 20885.252}, {"label": "2018 2018-19 Panini Prizm Jalen Brunson Green Prizm #250", "player": "Jalen Brunson", "raw": 122.49, "psa10": 365.0, "cost": 141.48, "supply": 18, "p": 0.377, "months": 0.7634, "x_win": 175.1575, "x_miss": -35.2199, "mu": 44.0948, "var": 10395.2011}, {"label": "2020 2020-21 Panini Prizm Anthony Edwards Pink Ice Prizm #258", "player": "Anthony Edwards", "raw": 126.995, "psa10": 446.5, "cost": 145.985, "supply": 8, "p": 0.3688, "months": 2.2792, "x_win": 241.3537, "x_miss": -35.8168, "mu": 66.3914, "var": 17882.5927}, {"label": "2023 2023-24 Panini Select Victor Wembanyama Green White Purple Prizm #87", "player": "Victor Wembanyama", "raw": 100.0, "psa10": 225.0, "cost": 118.99, "supply": 15, "p": 0.63, "months": 0.4955, "x_win": 76.1975, "x_miss": -32.24, "mu": 36.0737, "var": 2741.0039}];
+const PARAMS = {"keep": 0.8674999999999999, "grading": 20.0, "tiers": [[500.0, 18.99], [1500.0, 74.99], [2500.0, 149.0], [10000.0, 299.0]], "submission_days": 60.0, "logistics_days": 18.0};
+const $ = id => document.getElementById(id);
+const fmt = x => "$" + Math.round(x).toLocaleString();
+
+function tierFee(value, subFee) {
+  // Upcharge table: submission tier for the lowest bracket, published fees above.
+  for (const [maxValue, fee] of PARAMS.tiers) {
+    if (value <= maxValue) return maxValue === PARAMS.tiers[0][0] ? subFee : fee;
+  }
+  return PARAMS.tiers[PARAMS.tiers.length - 1][1];
+}
+
+function derive(cfg) {
+  const fixed = (cfg.gradeDays + cfg.logDays) / 30.44;
+  const knownCycles = CARDS.filter(c => c.months != null).map(c => fixed + c.months);
+  // Velocity ranking: an unmeasured sale queue conservatively assumes the
+  // slowest KNOWN cycle rather than getting a free pass.
+  const worstCycle = knownCycles.length ? Math.max(...knownCycles) : fixed + 1;
+  return CARDS.map(c => {
+    const feeWin = cfg.upcharge ? tierFee(c.psa10, cfg.subFee) : cfg.subFee;
+    const cost = c.raw + cfg.subFee;
+    const p = c.p * cfg.trust;  // adverse-selection haircut on the published rate
+    const x_win = c.psa10 * PARAMS.keep - c.raw - feeWin;
+    const x_miss = cfg.recovery * c.raw * PARAMS.keep - c.raw - cfg.subFee;
+    const mu = p * x_win + (1 - p) * x_miss;
+    const v = p * (x_win - mu) ** 2 + (1 - p) * (x_miss - mu) ** 2;
+    const cycle = c.months == null ? null : fixed + c.months;
+    const riskAdj = mu - cfg.lam * v;
+    const score = cfg.velocity
+      ? riskAdj / (cost * (cycle ?? worstCycle))
+      : riskAdj / cost;
+    return { ...c, p, feeWin, cost, x_win, x_miss, mu, var: v, cycle, score };
+  });
+}
+
+function allocate(cards, bankroll, playerCap) {
+  const ranked = [...cards].sort((a, b) => b.score - a.score);
+  let remaining = bankroll;
+  const spend = {}, picks = [], audit = [];
+  for (const c of ranked) {
+    if (c.score <= 0 || c.mu <= 0) { audit.push([c, 0, "score ≤ 0 (excluded)"]); continue; }
+    const nSupply = c.supply;
+    const nBudget = Math.floor(remaining / c.cost);
+    const nCap = Math.floor(Math.max(0, playerCap * bankroll - (spend[c.player] || 0)) / c.cost);
+    const n = Math.min(nSupply, nBudget, nCap);
+    let limit = "—";
+    if (n === nSupply) limit = "supply (" + nSupply + " listed)";
+    if (n === nCap && nCap < nSupply) limit = "player cap";
+    if (n === nBudget && nBudget < Math.min(nSupply, nCap)) limit = "bankroll";
+    if (n <= 0) { audit.push([c, 0, nCap === 0 ? "player cap" : "bankroll"]); continue; }
+    picks.push([c, n]);
+    audit.push([c, n, limit]);
+    remaining -= n * c.cost;
+    spend[c.player] = (spend[c.player] || 0) + n * c.cost;
+  }
+  return [picks, bankroll - remaining, audit];
+}
+
+function simulate(picks, sims) {
+  const totals = new Float64Array(sims);
+  for (let s = 0; s < sims; s++) {
+    let t = 0;
+    for (const [c, n] of picks) {
+      let wins = 0;
+      for (let i = 0; i < n; i++) if (Math.random() < c.p) wins++;
+      t += wins * c.x_win + (n - wins) * c.x_miss;
+    }
+    totals[s] = t;
+  }
+  totals.sort();
+  return {
+    mean: totals.reduce((a, b) => a + b, 0) / sims,
+    pLoss: totals.filter(t => t < 0).length / sims,
+    p10: totals[Math.floor(sims * 0.1)],
+    p90: totals[Math.floor(sims * 0.9)],
+  };
+}
+
+function refresh() {
+  const bankroll = Math.max(0, +$("bankroll").value || 0);
+  const tolerance = +$("risk").value;
+  const cfg = {
+    lam: (10 - tolerance) * 1e-4,
+    recovery: (+$("recovery").value) / 100,
+    subFee: Math.max(0, +$("subfee").value || 0),
+    upcharge: $("upcharge").checked,
+    gradeDays: Math.max(1, +$("gradedays").value || 60),
+    logDays: Math.max(0, +$("logdays").value || 0),
+    velocity: $("rankmode").checked,
+    trust: (+$("gemtrust").value) / 100,
+  };
+  const cap = (+$("cap").value) / 100;
+  $("risk-v").textContent = tolerance + " / 10";
+  $("cap-v").textContent = $("cap").value + "%";
+  $("recovery-v").textContent = $("recovery").value + "%";
+  $("upcharge-v").textContent = cfg.upcharge ? "ON" : "OFF";
+  $("rankmode-v").textContent = cfg.velocity ? "$/month" : "$";
+  $("gemtrust-v").textContent = $("gemtrust").value + "%";
+  $("f-recovery").textContent = "current r = " + cfg.recovery.toFixed(2) +
+    ", submission fee = $" + cfg.subFee + ", upcharges " + (cfg.upcharge ? "ON" : "OFF") +
+    ", gem trust = " + Math.round(cfg.trust * 100) + "% (p = trust × shrunk published rate)";
+
+  const cards = derive(cfg);
+  const [picks, spent, audit] = allocate(cards, bankroll, cap);
+
+  const tbody = $("rows");
+  tbody.innerHTML = "";
+  for (const [c, n] of [...picks].sort((a, b) => b[0].mu * b[1] - a[0].mu * a[1])) {
+    const cyc = c.cycle == null ? "?" : c.cycle.toFixed(1) + " mo";
+    const vel = c.cycle == null ? "?" : (c.mu / c.cost / c.cycle * 100).toFixed(0) + "%";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${c.label}</td><td class="num">${n}</td>` +
+      `<td class="num">${fmt(n * c.cost)}</td><td class="num">${fmt(n * c.mu)}</td>` +
+      `<td class="num">${Math.round(c.p * 100)}%</td>` +
+      `<td class="num">${cyc}</td><td class="num">${vel}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  $("f-lambda").innerHTML = cfg.velocity
+    ? `score = (μ − λ × σ²) ÷ (cost × cycle)&nbsp;&nbsp;<span class="muted">profit per dollar per MONTH — ` +
+      `the compounding-optimal ranking; λ = ${cfg.lam.toExponential(1)}</span>`
+    : `score = (μ − λ × σ²) ÷ cost&nbsp;&nbsp;<span class="muted">profit per dollar for one round trip; ` +
+      `λ = ${cfg.lam.toExponential(1)} (risk tolerance ${tolerance}/10)</span>`;
+  const mrows = $("mathrows");
+  mrows.innerHTML = "";
+  audit.forEach(([c, n, limit], i) => {
+    const tr = document.createElement("tr");
+    if (n === 0) tr.style.opacity = "0.45";
+    tr.innerHTML = `<td>${i + 1}</td><td>${c.label}</td>` +
+      `<td class="num">${(c.p * 100).toFixed(1)}%</td>` +
+      `<td class="num">${Math.round(c.x_win)}</td>` +
+      `<td class="num">$${Math.round(c.feeWin)}</td>` +
+      `<td class="num">${Math.round(c.x_miss)}</td>` +
+      `<td class="num">${Math.round(c.mu)}</td><td class="num">${Math.round(Math.sqrt(c.var))}</td>` +
+      `<td class="num">${c.score.toFixed(4)}</td><td class="num">${n}</td><td>${limit}</td>`;
+    mrows.appendChild(tr);
+  });
+
+  if (!picks.length) {
+    tbody.innerHTML = '<tr><td colspan="7">nothing clears this risk setting / bankroll</td></tr>';
+    ["s-spent", "s-ev", "s-loss", "s-range", "s-cycle", "s-annual"].forEach(id => $(id).textContent = "–");
+    $("simnote").textContent = "";
+    return;
+  }
+  // The Monte Carlo is real and re-rolls fresh on EVERY change — the timing
+  // line below is the receipt, and the loss/range stats wiggle a hair between
+  // recomputes because they are new random draws, not cached values.
+  const nSims = 10000;
+  const t0 = performance.now();
+  const mc = simulate(picks, nSims);
+  const simMs = performance.now() - t0;
+  const nCopies = picks.reduce((a, [, n]) => a + n, 0);
+  $("simnote").textContent =
+    `↑ freshly simulated: ${nSims.toLocaleString()} portfolios × ${nCopies} copies ` +
+    `(${(nSims * nCopies).toLocaleString()} random gradings) in ${simMs.toFixed(1)} ms — ` +
+    `nudge any control and watch the range wiggle: new draws every time`;
+  $("s-spent").textContent = fmt(spent);
+  $("s-ev").textContent = "+" + fmt(mc.mean);
+  $("s-loss").textContent = (mc.pLoss * 100).toFixed(1) + "%";
+  $("s-range").textContent = fmt(mc.p10) + " – " + fmt(mc.p90);
+  const known = picks.filter(([c]) => c.cycle != null);
+  if (known.length && spent > 0) {
+    const kSpend = known.reduce((a, [c, n]) => a + n * c.cost, 0);
+    const wavg = known.reduce((a, [c, n]) => a + c.cycle * n * c.cost, 0) / kSpend;
+    $("s-cycle").textContent = wavg.toFixed(1) + " mo";
+    $("s-annual").textContent = "≈" + (((1 + mc.mean / spent) ** (12 / wavg) - 1) * 100).toFixed(0) + "%/yr";
+  } else {
+    $("s-cycle").textContent = "?";
+    $("s-annual").textContent = "?";
+  }
+}
+
+for (const id of ["bankroll", "risk", "cap", "recovery", "rankmode", "subfee", "upcharge", "gemtrust", "gradedays", "logdays"])
+  $(id).addEventListener("input", refresh);
+refresh();
+
+// Viewport-clamped tooltips (see #tipbox CSS note).
+const tipbox = document.createElement("div");
+tipbox.id = "tipbox";
+document.body.appendChild(tipbox);
+document.addEventListener("mouseover", e => {
+  const t = e.target.closest ? e.target.closest(".tip") : null;
+  if (!t || !t.dataset.tip) return;
+  tipbox.textContent = t.dataset.tip;
+  tipbox.style.display = "block";
+  const r = t.getBoundingClientRect();
+  const w = tipbox.offsetWidth, h = tipbox.offsetHeight;
+  const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+  let top = r.top - h - 10;
+  if (top < 8) top = r.bottom + 10;  // no room above -> flip below
+  tipbox.style.left = left + "px";
+  tipbox.style.top = top + "px";
+});
+document.addEventListener("mouseout", e => {
+  if (e.target.closest && e.target.closest(".tip")) tipbox.style.display = "none";
+});
+window.addEventListener("scroll", () => { tipbox.style.display = "none"; }, true);
+</script>
+</body>
+</html>
