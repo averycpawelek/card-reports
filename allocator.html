@@ -148,7 +148,7 @@
       <div>
         <label for="screentarget">Screen target gem rate <b id="screentarget-v"></b></label>
         <input type="range" id="screentarget" min="50" max="90" step="5" value="70">
-        <div class="hint"><span class="tip" data-tip="Your screen's SKILL, anchored: the precision it would achieve on a reference 40%-gem pool (community: ~70% = good self-grader, 80%+ = elite ceiling). The SAME skill achieves DIFFERENT rates per card — a 10%-gem pool can't be screened to 70% by this screener (it lands ~35-50%), a 60% pool sails past it. The gem column shows each card's achieved rate; the receipt under the stats shows the range and what rejection rate the setting implies. In the simulation, precision also degrades when a card's true pool rate draws worse than the pop panel suggested. NOT modeled: the labor of reviewing listings (or the vision model that would automate it).">screen skill: precision on a 40%-gem pool</span></div>
+        <div class="hint"><span class="tip" data-tip="Your screen's SKILL, anchored: the precision it would achieve on a reference 40%-gem pool (community: ~70% = good self-grader). The SAME skill achieves DIFFERENT rates per card, and there is a PHYSICAL CEILING: ~25% of non-gem causes (print lines, surface dents, back-edge whitening) are invisible in photos and pass any screen, capping a 60% pool near 86%, a 40% pool near 73%, a 10% pool near 31% — sliding past the ceiling just flattens out. The gem column shows each card's achieved rate; the receipt under the stats shows the range. In the simulation, precision also degrades when a card's true pool rate draws worse than the pop panel suggested. NOT modeled: the labor of reviewing listings (or the vision model that would automate it).">screen skill: precision on a 40%-gem pool</span></div>
       </div>
       <div>
         <label for="logdays">Logistics (days)</label>
@@ -356,16 +356,34 @@ function randBeta(a, b) { const x = randGamma(a); return x / (x + randGamma(b));
 // This is deliberate: skill is a property of the screener, not of the card.
 const SCREEN_SENS = 0.75;
 const SCREEN_REF_POOL = 0.40;
+// PHOTO-BLIND defects: the share of non-gem causes invisible in listing
+// photos (print lines, surface dents, Panini back-edge whitening — the
+// community's unanimous "what no photo screen catches"). Copies whose only
+// flaws are blind LOOK like gems and get accepted like gems, which caps the
+// achievable precision at pool/(pool + v*(1-pool)) no matter the skill:
+// ~86% on a 60% pool, ~73% on a 40% pool (matching the community's "70% =
+// good self-grader"), only ~31% on a 10% pool.
+const SCREEN_BLIND = 0.25;
 
 function screenParams(target) {
-  // Global skill from the anchor; clamp so fpr stays a probability.
+  // Anchor the skill: solve the visible-defect miss rate f so precision on
+  // the 40% reference pool equals the target — clamped at the blind-defect
+  // ceiling (a slider cannot demand better than physics; f floors at 0).
+  const s = SCREEN_SENS, v = SCREEN_BLIND, q0 = SCREEN_REF_POOL;
   const T = Math.min(Math.max(target, 0.05), 0.99);
-  const fpr = SCREEN_SENS * SCREEN_REF_POOL * (1 - T) /
-              (T * (1 - SCREEN_REF_POOL));
-  return { s: SCREEN_SENS, fpr: Math.min(fpr, 1) };
+  const f = Math.max(0,
+    (s * q0 * (1 - T) / T - s * v * (1 - q0)) / ((1 - v) * (1 - q0)));
+  return { s, v, f: Math.min(f, 1) };
 }
-function screenedP(q, sp) { const k = sp.s * q + sp.fpr * (1 - q); return k > 0 ? sp.s * q / k : 0; }
-function screenedKeep(q, sp) { return sp.s * q + sp.fpr * (1 - q); }
+// Accepted set at pool rate q: gems s*q; blind non-gems s*v*(1-q) (they look
+// clean, accepted like gems); visible non-gems f*(1-v)*(1-q).
+function screenedKeep(q, sp) {
+  return sp.s * q + sp.s * sp.v * (1 - q) + sp.f * (1 - sp.v) * (1 - q);
+}
+function screenedP(q, sp) {
+  const k = screenedKeep(q, sp);
+  return k > 0 ? sp.s * q / k : 0;
+}
 
 function derive(cfg) {
   const fixed = (cfg.gradeDays + cfg.logDays) / 30.44;
@@ -597,12 +615,14 @@ function refresh() {
     const wAvg = (f) => scr.reduce((a, [c, n]) => a + f(c) * n, 0) /
                         scr.reduce((a, [, n]) => a + n, 0);
     const keep = wAvg((c) => screenedKeep(c.pool, c.screen));
-    const rej = 1 - scr[0][0].screen.fpr;
+    const sk = scr[0][0].screen;
+    const rejVis = 1 - sk.f;
     const rates = scr.map(([c]) => c.p).sort((a, b) => a - b);
-    simExtra = ` ⚠ SCREEN ASSUMES a fixed skill (catches ${Math.round(SCREEN_SENS * 100)}% of gems, ` +
-      `rejects ~${Math.round(rej * 100)}% of non-gems from photos — the "${Math.round((+$("screentarget").value))}% on a 40% pool" anchor). ` +
-      `Achieved rates vary by card: ${Math.round(rates[0] * 100)}%-${Math.round(rates[rates.length - 1] * 100)}% on these picks, ` +
-      `buying only ~${Math.round(keep * 100)}% of listings. Verify against your own realized rate.`;
+    simExtra = ` ⚠ SCREEN ASSUMES a fixed skill: catches ${Math.round(sk.s * 100)}% of gems, ` +
+      `rejects ~${Math.round(rejVis * 100)}% of PHOTO-VISIBLE flaws — but ${Math.round(sk.v * 100)}% of non-gem causes ` +
+      `(surface, back-edge) are invisible in photos and pass every screen, capping what any skill can achieve. ` +
+      `Achieved rates: ${Math.round(rates[0] * 100)}%-${Math.round(rates[rates.length - 1] * 100)}% on these picks, ` +
+      `buying ~${Math.round(keep * 100)}% of listings. Verify against your own realized rate.`;
   }
   $("simnote").textContent =
     `↑ freshly simulated: ${nSims.toLocaleString()} portfolios × ${nCopies} copies ` +
