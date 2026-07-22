@@ -129,6 +129,16 @@
         <div class="hint"><span class="tip" data-tip="PSA's published gem rates describe cards submitters PRE-SCREENED before grading; raw eBay listings are what every prior owner's eye test left behind (peer-reviewed: raw eBay cards graded WORSE than the same cards bought raw in stores, and sellers' condition claims carried zero information — Jin & Kato 2006). DEFAULTS TO 60%: the researched consensus for PHOTO-SCREENED buying, our workflow — community flippers repeatedly realize ~30% gems against ~50-60% published (ratio 0.5-0.65), and published-data triangulation gives 0.6-0.9; 60% is the overlap. Slide DOWN to 30-40% for sight-unseen/bulk buying or very cheap-vs-slab cards (novices realize 7-20%); UP past 80% only when OUR OWN submissions prove it. Photos reveal centering but not surface — print lines and Panini back-edge whitening are the risk no photo screen removes. Full evidence: docs/notes/2026-07-19-gem-trust-and-adverse-selection.md. The first real PSA submission replaces this researched guess with a measurement.">% of the published rate you expect to realize (adverse selection) — why 60%?</span></div>
       </div>
       <div>
+        <label for="gemfloor">Gem-rate floor <b id="gemfloor-v"></b></label>
+        <input type="range" id="gemfloor" min="0" max="80" step="5" value="0">
+        <div class="hint"><span class="tip" data-tip="HARD exclude below this PUBLISHED gem rate (pop-panel rate after small-sample shrinkage, BEFORE the trust haircut — so this floor doesn't move when you slide trust). 0% = off: no floor, the EV/Kelly math sizes low-gem cards instead of banning them (the July-15 partner decision). Set 45% to reproduce the retired July-3 criterion and see what it excludes — floored-out cards appear in the full-ranking table below with the reason.">exploration knob: 0 = let the math decide</span></div>
+      </div>
+      <div>
+        <label for="spreadfloor">Spread floor <b id="spreadfloor-v"></b></label>
+        <input type="range" id="spreadfloor" min="1" max="6" step="0.25" value="1">
+        <div class="hint"><span class="tip" data-tip="HARD exclude cards whose PSA-10 comp is below this multiple of the raw median. 1.0x = off (any card that clears the fee math is allowed). The partner criterion 2 was 3.0x — set that to reproduce it. Floored-out cards appear in the full-ranking table with the reason. Note the discovery scan itself gates at 1.2x (the mathematical fee floor), so nothing below that exists in this data.">exploration knob: 1.0x = let the math decide</span></div>
+      </div>
+      <div>
         <label for="logdays">Logistics (days)</label>
         <input type="number" id="logdays" min="0" step="1" value="18">
         <div class="hint"><span class="tip" data-tip="Everything around grading: shipping to PSA, return shipping, photographing/listing, and eBay's payout delay.">ship + return + list + payout</span></div>
@@ -328,6 +338,8 @@ function derive(cfg) {
   return CARDS.map(c => {
     const feeWin = cfg.upcharge ? tierFee(c.psa10, cfg.subFee) : cfg.subFee;
     const cost = c.raw + cfg.subFee;
+    const pubP = c.p;           // published (shrunk) rate — floors key off this
+    const spreadX = c.raw ? c.psa10 / c.raw : null;
     const p = c.p * cfg.trust;  // adverse-selection haircut on the published rate
     const x_win = c.psa10 * PARAMS.keep - c.raw - feeWin;
     const x_miss = cfg.recovery * c.raw * PARAMS.keep - c.raw - cfg.subFee;
@@ -340,15 +352,25 @@ function derive(cfg) {
       : riskAdj / cost;
     // trust rides along for the Kelly cap + Monte Carlo, which thin the
     // POSTERIOR draws by it (the payload's build-time trust is stale).
-    return { ...c, p, trust: cfg.trust, feeWin, cost, x_win, x_miss, mu, var: v, cycle, score };
+    return { ...c, p, pubP, spreadX, trust: cfg.trust, feeWin, cost, x_win, x_miss, mu, var: v, cycle, score };
   });
 }
 
-function allocate(cards, bankroll, playerCap) {
+function allocate(cards, bankroll, playerCap, gemFloor = 0, spreadFloor = 1) {
   const ranked = [...cards].sort((a, b) => b.score - a.score);
   let remaining = bankroll;
   const spend = {}, picks = [], audit = [];
   for (const c of ranked) {
+    // Exploration floors (default off): HARD excludes, shown with reasons so
+    // the cost of a criterion is visible instead of silent.
+    if (c.pubP < gemFloor) {
+      audit.push([c, 0, `gem floor (${Math.round(c.pubP * 100)}% < ${Math.round(gemFloor * 100)}%)`]);
+      continue;
+    }
+    if (c.spreadX != null && c.spreadX < spreadFloor) {
+      audit.push([c, 0, `spread floor (${c.spreadX.toFixed(1)}x < ${spreadFloor.toFixed(2)}x)`]);
+      continue;
+    }
     if (c.score <= 0 || c.mu <= 0) { audit.push([c, 0, "score ≤ 0 (excluded)"]); continue; }
     const nSupply = c.supply;
     // Kelly cap vs the FULL bankroll: how much of this card the portfolio
@@ -438,6 +460,10 @@ function refresh() {
     trust: (+$("gemtrust").value) / 100,
   };
   const cap = (+$("cap").value) / 100;
+  const gemFloor = (+$("gemfloor").value) / 100;
+  const spreadFloor = +$("spreadfloor").value;
+  $("gemfloor-v").textContent = gemFloor > 0 ? Math.round(gemFloor * 100) + "%" : "off";
+  $("spreadfloor-v").textContent = spreadFloor > 1 ? spreadFloor.toFixed(2) + "x" : "off";
   $("risk-v").textContent = tolerance + " / 10";
   $("cap-v").textContent = $("cap").value + "%";
   $("recovery-v").textContent = $("recovery").value + "%";
@@ -449,7 +475,7 @@ function refresh() {
     ", gem trust = " + Math.round(cfg.trust * 100) + "% (p = trust × shrunk published rate)";
 
   const cards = derive(cfg);
-  const [picks, spent, audit] = allocate(cards, bankroll, cap);
+  const [picks, spent, audit] = allocate(cards, bankroll, cap, gemFloor, spreadFloor);
 
   const tbody = $("rows");
   tbody.innerHTML = "";
@@ -523,7 +549,8 @@ function refresh() {
   const knownForProj = picks.filter(([c]) => c.cycle != null);
   const rho = (+$("reinvest").value) / 100;
   $("reinvest-v").textContent = $("reinvest").value + "%";
-  const autoCap = cards.filter(c => c.mu > 0)
+  const autoCap = cards.filter(c => c.mu > 0 && c.pubP >= gemFloor
+      && (c.spreadX == null || c.spreadX >= spreadFloor))
     .reduce((a, c) => a + c.cost * c.supply, 0);
   const cap2 = (+$("capacity").value) > 0 ? +$("capacity").value : autoCap;
   if (knownForProj.length && spent > 0) {
@@ -583,7 +610,7 @@ function refresh() {
   }
 }
 
-for (const id of ["bankroll", "risk", "cap", "recovery", "rankmode", "subfee", "upcharge", "gemtrust", "gradedays", "logdays", "reinvest", "capacity"])
+for (const id of ["bankroll", "risk", "cap", "recovery", "rankmode", "subfee", "upcharge", "gemtrust", "gemfloor", "spreadfloor", "gradedays", "logdays", "reinvest", "capacity"])
   $(id).addEventListener("input", refresh);
 refresh();
 
