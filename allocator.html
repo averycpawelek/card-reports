@@ -139,6 +139,18 @@
         <div class="hint"><span class="tip" data-tip="HARD exclude cards whose PSA-10 comp is below this multiple of the raw median. 1.0x = off (any card that clears the fee math is allowed). The partner criterion 2 was 3.0x — set that to reproduce it. Floored-out cards appear in the full-ranking table with the reason. Note the discovery scan itself gates at 1.2x (the mathematical fee floor), so nothing below that exists in this data.">exploration knob: 1.0x = let the math decide</span></div>
       </div>
       <div>
+        <label>Pre-screen before buying <b id="screen-v"></b></label>
+        <div class="switchrow">
+          <label class="switch"><input type="checkbox" id="screen"><span class="knob"></span></label>
+        </div>
+        <div class="hint"><span class="tip" data-tip="Model the eye-test/vision-model workflow: instead of buying every listed copy at the pool's gem rate, buy ONLY the copies the photo screen approves, targeting the gem rate below. A screen cannot create gems — it CONCENTRATES them — so effective supply shrinks to roughly pool-rate ÷ target of the listings (an imperfect screen also misses some real gems; capture is modeled at 75%). IMPORTANT: with the screen ON, slide gem trust DOWN to the sight-unseen pool value (~40-50%) — the 60% trust default already assumed light photo screening, and leaving it there double-counts the screen.">buy only what the eye test approves</span></div>
+      </div>
+      <div>
+        <label for="screentarget">Screen target gem rate <b id="screentarget-v"></b></label>
+        <input type="range" id="screentarget" min="50" max="90" step="5" value="70">
+        <div class="hint"><span class="tip" data-tip="The realized gem rate the screen aims for on the copies it approves. Community evidence: ~70% is what good self-graders achieve with careful photo screening; 80-90% claims come from elite screeners with strict listing filters and should be treated as a ceiling. The screen's precision degrades honestly in the simulation when a card's true pool rate turns out worse than the pop panel suggested — a bad pool drags even a screened batch down. Cards whose pool rate already exceeds the target are unaffected. NOT modeled: the labor of reviewing listings (or the vision-model build that would automate it).">what the approved copies should gem at</span></div>
+      </div>
+      <div>
         <label for="logdays">Logistics (days)</label>
         <input type="number" id="logdays" min="0" step="1" value="18">
         <div class="hint"><span class="tip" data-tip="Everything around grading: shipping to PSA, return shipping, photographing/listing, and eBay's payout delay.">ship + return + list + payout</span></div>
@@ -289,7 +301,9 @@ function kellyCopies(c, trust, bankroll, maxCopies) {
     let g = 0;
     outer:
     for (const [p, w] of nodes) {
-      const pe = Math.min(1, trust * p), qe = 1 - pe;
+      let pe = Math.min(1, trust * p);
+      if (c.screen) pe = screenedP(pe, c.screen);   // screened batch: higher rate, fewer copies
+      const qe = 1 - pe;
       if (qe < 1e-12) {  // certain gem: the batch is all wins
         g += w * Math.log(1 + n * c.x_win / bankroll);
         continue;
@@ -329,6 +343,24 @@ function randGamma(shape) {
 }
 function randBeta(a, b) { const x = randGamma(a); return x / (x + randGamma(b)); }
 
+// ---- Pre-screen model ----
+// A photo screen with fixed discrimination: sensitivity SCREEN_SENS (share of
+// true gems it recognizes — photos reveal centering but not surface, so well
+// below 1) and a false-positive rate BACKED OUT from the target: at the
+// EXPECTED pool rate pool, precision == target. Per simulation draw q the
+// realized precision follows Bayes — worse pools degrade the screen too:
+//   precision(q) = s*q / (s*q + fpr*(1-q))     keep(q) = s*q + fpr*(1-q)
+const SCREEN_SENS = 0.75;
+
+function screenParams(pool, target) {
+  // No-op when the pool already beats the target (or target off the table).
+  if (!(target > pool) || pool <= 0 || pool >= 1) return null;
+  const fpr = SCREEN_SENS * pool * (1 - target) / (target * (1 - pool));
+  return { s: SCREEN_SENS, fpr };
+}
+function screenedP(q, sp) { const k = sp.s * q + sp.fpr * (1 - q); return k > 0 ? sp.s * q / k : 0; }
+function screenedKeep(q, sp) { return sp.s * q + sp.fpr * (1 - q); }
+
 function derive(cfg) {
   const fixed = (cfg.gradeDays + cfg.logDays) / 30.44;
   const knownCycles = CARDS.filter(c => c.months != null).map(c => fixed + c.months);
@@ -340,7 +372,13 @@ function derive(cfg) {
     const cost = c.raw + cfg.subFee;
     const pubP = c.p;           // published (shrunk) rate — floors key off this
     const spreadX = c.raw ? c.psa10 / c.raw : null;
-    const p = c.p * cfg.trust;  // adverse-selection haircut on the published rate
+    const pool = c.p * cfg.trust;  // adverse-selection haircut on the published rate
+    // Pre-screen: buy only approved copies — per-copy rate rises to ~target,
+    // effective supply shrinks to the kept fraction of listings.
+    const sp = cfg.screen ? screenParams(pool, cfg.screenTarget) : null;
+    const p = sp ? screenedP(pool, sp) : pool;
+    const supply = sp ? Math.floor(c.supply * screenedKeep(pool, sp)) : c.supply;
+    // pool kept for the screen receipt (what the toggle is assuming per card)
     const x_win = c.psa10 * PARAMS.keep - c.raw - feeWin;
     const x_miss = cfg.recovery * c.raw * PARAMS.keep - c.raw - cfg.subFee;
     const mu = p * x_win + (1 - p) * x_miss;
@@ -352,7 +390,7 @@ function derive(cfg) {
       : riskAdj / cost;
     // trust rides along for the Kelly cap + Monte Carlo, which thin the
     // POSTERIOR draws by it (the payload's build-time trust is stale).
-    return { ...c, p, pubP, spreadX, trust: cfg.trust, feeWin, cost, x_win, x_miss, mu, var: v, cycle, score };
+    return { ...c, p, pubP, spreadX, supply, pool, screen: sp, trust: cfg.trust, feeWin, cost, x_win, x_miss, mu, var: v, cycle, score };
   });
 }
 
@@ -405,7 +443,8 @@ function simulate(picks, sims) {
       // Copies share the card's true gem rate: draw it from the posterior
       // (thinned by gem trust), THEN grade the batch at the drawn rate —
       // a flat p per copy would understate the portfolio's tails.
-      const p = Math.min(1, c.trust * randBeta(c.alpha, c.beta));
+      let p = Math.min(1, c.trust * randBeta(c.alpha, c.beta));
+      if (c.screen) p = screenedP(p, c.screen);   // precision degrades with a bad pool draw
       let wins = 0;
       for (let i = 0; i < n; i++) if (Math.random() < p) wins++;
       t += wins * c.x_win + (n - wins) * c.x_miss;
@@ -437,7 +476,7 @@ function pickDetailHtml(c, n) {
       <div><b>PSA-10 comp</b> ${money(c.psa10)} <span class="muted">(n=${c.psa10_n ?? "?"}, ${demand} sold)</span></div>
       <div><b>Raw asks</b> ${money(c.raw_low)} &ndash; ${money(c.raw_high)} <span class="muted">(median ${money(c.raw)}, ${c.supply} listed BIN)</span></div>
       <div><b>Per copy</b> win ${money(c.x_win)} / miss ${money(c.x_miss)} <span class="muted">(all-in cost ${money(c.cost)})</span></div>
-      <div><b>Position</b> ${n} of Kelly n*=${c.kellyN} <span class="muted">(supply ${c.supply})</span></div>
+      <div><b>Position</b> ${n} of Kelly n*=${c.kellyN} <span class="muted">(${c.screen ? `screened supply ${c.supply}` : `supply ${c.supply}`})</span></div>
       <div><b>PSA-10 market</b> ${supply} <span class="muted">(${queue})</span></div>
     </div>
     <div style="margin-top:10px;">
@@ -458,10 +497,14 @@ function refresh() {
     logDays: Math.max(0, +$("logdays").value || 0),
     velocity: $("rankmode").checked,
     trust: (+$("gemtrust").value) / 100,
+    screen: $("screen").checked,
+    screenTarget: (+$("screentarget").value) / 100,
   };
   const cap = (+$("cap").value) / 100;
   const gemFloor = (+$("gemfloor").value) / 100;
   const spreadFloor = +$("spreadfloor").value;
+  $("screen-v").textContent = cfg.screen ? "ON" : "OFF";
+  $("screentarget-v").textContent = Math.round(cfg.screenTarget * 100) + "%";
   $("gemfloor-v").textContent = gemFloor > 0 ? Math.round(gemFloor * 100) + "%" : "off";
   $("spreadfloor-v").textContent = spreadFloor > 1 ? spreadFloor.toFixed(2) + "x" : "off";
   $("risk-v").textContent = tolerance + " / 10";
@@ -537,10 +580,24 @@ function refresh() {
   const mc = simulate(picks, nSims);
   const simMs = performance.now() - t0;
   const nCopies = picks.reduce((a, [, n]) => a + n, 0);
+  let simExtra = "";
+  const scr = picks.filter(([c]) => c.screen);
+  if (scr.length) {
+    // The screen receipt: HOW HEROIC is the assumption? Buying keep% of
+    // listings at the target rate implies the eye test rejects
+    // (1 - fpr) of non-gems — print it so nobody mistakes a slider for a skill.
+    const wAvg = (f) => scr.reduce((a, [c, n]) => a + f(c) * n, 0) /
+                        scr.reduce((a, [, n]) => a + n, 0);
+    const keep = wAvg((c) => screenedKeep(c.pool, c.screen));
+    const rej = wAvg((c) => 1 - c.screen.fpr);
+    simExtra = ` ⚠ SCREEN ASSUMES: buying only ~${Math.round(keep * 100)}% of listings, ` +
+      `and that the eye test correctly rejects ~${Math.round(rej * 100)}% of non-gems ` +
+      `from photos — verify against your own realized rate before believing these numbers.`;
+  }
   $("simnote").textContent =
     `↑ freshly simulated: ${nSims.toLocaleString()} portfolios × ${nCopies} copies ` +
     `(${(nSims * nCopies).toLocaleString()} random gradings) in ${simMs.toFixed(1)} ms — ` +
-    `nudge any control and watch the range wiggle: new draws every time`;
+    `nudge any control and watch the range wiggle: new draws every time` + simExtra;
   $("s-spent").textContent = fmt(spent);
   $("s-ev").textContent = "+" + fmt(mc.mean);
   $("s-loss").textContent = (mc.pLoss * 100).toFixed(1) + "%";
@@ -610,7 +667,7 @@ function refresh() {
   }
 }
 
-for (const id of ["bankroll", "risk", "cap", "recovery", "rankmode", "subfee", "upcharge", "gemtrust", "gemfloor", "spreadfloor", "gradedays", "logdays", "reinvest", "capacity"])
+for (const id of ["bankroll", "risk", "cap", "recovery", "rankmode", "subfee", "upcharge", "gemtrust", "screen", "screentarget", "gemfloor", "spreadfloor", "gradedays", "logdays", "reinvest", "capacity"])
   $(id).addEventListener("input", refresh);
 refresh();
 
