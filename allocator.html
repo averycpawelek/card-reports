@@ -148,7 +148,7 @@
       <div>
         <label for="screentarget">Screen target gem rate <b id="screentarget-v"></b></label>
         <input type="range" id="screentarget" min="50" max="90" step="5" value="70">
-        <div class="hint"><span class="tip" data-tip="The realized gem rate the screen aims for on the copies it approves. Community evidence: ~70% is what good self-graders achieve with careful photo screening; 80-90% claims come from elite screeners with strict listing filters and should be treated as a ceiling. The screen's precision degrades honestly in the simulation when a card's true pool rate turns out worse than the pop panel suggested — a bad pool drags even a screened batch down. Cards whose pool rate already exceeds the target are unaffected. NOT modeled: the labor of reviewing listings (or the vision-model build that would automate it).">what the approved copies should gem at</span></div>
+        <div class="hint"><span class="tip" data-tip="Your screen's SKILL, anchored: the precision it would achieve on a reference 40%-gem pool (community: ~70% = good self-grader, 80%+ = elite ceiling). The SAME skill achieves DIFFERENT rates per card — a 10%-gem pool can't be screened to 70% by this screener (it lands ~35-50%), a 60% pool sails past it. The gem column shows each card's achieved rate; the receipt under the stats shows the range and what rejection rate the setting implies. In the simulation, precision also degrades when a card's true pool rate draws worse than the pop panel suggested. NOT modeled: the labor of reviewing listings (or the vision model that would automate it).">screen skill: precision on a 40%-gem pool</span></div>
       </div>
       <div>
         <label for="logdays">Logistics (days)</label>
@@ -344,19 +344,25 @@ function randGamma(shape) {
 function randBeta(a, b) { const x = randGamma(a); return x / (x + randGamma(b)); }
 
 // ---- Pre-screen model ----
-// A photo screen with fixed discrimination: sensitivity SCREEN_SENS (share of
-// true gems it recognizes — photos reveal centering but not surface, so well
-// below 1) and a false-positive rate BACKED OUT from the target: at the
-// EXPECTED pool rate pool, precision == target. Per simulation draw q the
-// realized precision follows Bayes — worse pools degrade the screen too:
-//   precision(q) = s*q / (s*q + fpr*(1-q))     keep(q) = s*q + fpr*(1-q)
+// ONE screener with FIXED skill, applied to every card: sensitivity
+// SCREEN_SENS (share of true gems the photos let it recognize — centering
+// shows, surface doesn't) and ONE false-positive rate for the whole
+// portfolio. The target slider ANCHORS that skill: it is the precision the
+// screen would achieve on a reference 40%-gem pool (the shrinkage prior).
+// The same skill then achieves DIFFERENT rates per card — Bayes:
+//   precision(pool) = s*pool / (s*pool + fpr*(1-pool))
+// a 10%-gem pool cannot be screened to 70% by a screener that merely hits
+// 70% on a 40% pool (it lands ~35-50%), while a 60% pool sails past it.
+// This is deliberate: skill is a property of the screener, not of the card.
 const SCREEN_SENS = 0.75;
+const SCREEN_REF_POOL = 0.40;
 
-function screenParams(pool, target) {
-  // No-op when the pool already beats the target (or target off the table).
-  if (!(target > pool) || pool <= 0 || pool >= 1) return null;
-  const fpr = SCREEN_SENS * pool * (1 - target) / (target * (1 - pool));
-  return { s: SCREEN_SENS, fpr };
+function screenParams(target) {
+  // Global skill from the anchor; clamp so fpr stays a probability.
+  const T = Math.min(Math.max(target, 0.05), 0.99);
+  const fpr = SCREEN_SENS * SCREEN_REF_POOL * (1 - T) /
+              (T * (1 - SCREEN_REF_POOL));
+  return { s: SCREEN_SENS, fpr: Math.min(fpr, 1) };
 }
 function screenedP(q, sp) { const k = sp.s * q + sp.fpr * (1 - q); return k > 0 ? sp.s * q / k : 0; }
 function screenedKeep(q, sp) { return sp.s * q + sp.fpr * (1 - q); }
@@ -373,9 +379,10 @@ function derive(cfg) {
     const pubP = c.p;           // published (shrunk) rate — floors key off this
     const spreadX = c.raw ? c.psa10 / c.raw : null;
     const pool = c.p * cfg.trust;  // adverse-selection haircut on the published rate
-    // Pre-screen: buy only approved copies — per-copy rate rises to ~target,
-    // effective supply shrinks to the kept fraction of listings.
-    const sp = cfg.screen ? screenParams(pool, cfg.screenTarget) : null;
+    // Pre-screen: buy only approved copies. The GLOBAL screen skill yields a
+    // per-card achieved rate (low pools achieve less than the anchor target,
+    // high pools more); supply shrinks to the kept fraction of listings.
+    const sp = cfg.screen && pool > 0 && pool < 1 ? cfg.screenSkill : null;
     const p = sp ? screenedP(pool, sp) : pool;
     const supply = sp ? Math.floor(c.supply * screenedKeep(pool, sp)) : c.supply;
     // pool kept for the screen receipt (what the toggle is assuming per card)
@@ -500,6 +507,7 @@ function refresh() {
     screen: $("screen").checked,
     screenTarget: (+$("screentarget").value) / 100,
   };
+  cfg.screenSkill = cfg.screen ? screenParams(cfg.screenTarget) : null;
   const cap = (+$("cap").value) / 100;
   const gemFloor = (+$("gemfloor").value) / 100;
   const spreadFloor = +$("spreadfloor").value;
@@ -589,10 +597,12 @@ function refresh() {
     const wAvg = (f) => scr.reduce((a, [c, n]) => a + f(c) * n, 0) /
                         scr.reduce((a, [, n]) => a + n, 0);
     const keep = wAvg((c) => screenedKeep(c.pool, c.screen));
-    const rej = wAvg((c) => 1 - c.screen.fpr);
-    simExtra = ` ⚠ SCREEN ASSUMES: buying only ~${Math.round(keep * 100)}% of listings, ` +
-      `and that the eye test correctly rejects ~${Math.round(rej * 100)}% of non-gems ` +
-      `from photos — verify against your own realized rate before believing these numbers.`;
+    const rej = 1 - scr[0][0].screen.fpr;
+    const rates = scr.map(([c]) => c.p).sort((a, b) => a - b);
+    simExtra = ` ⚠ SCREEN ASSUMES a fixed skill (catches ${Math.round(SCREEN_SENS * 100)}% of gems, ` +
+      `rejects ~${Math.round(rej * 100)}% of non-gems from photos — the "${Math.round((+$("screentarget").value))}% on a 40% pool" anchor). ` +
+      `Achieved rates vary by card: ${Math.round(rates[0] * 100)}%-${Math.round(rates[rates.length - 1] * 100)}% on these picks, ` +
+      `buying only ~${Math.round(keep * 100)}% of listings. Verify against your own realized rate.`;
   }
   $("simnote").textContent =
     `↑ freshly simulated: ${nSims.toLocaleString()} portfolios × ${nCopies} copies ` +
